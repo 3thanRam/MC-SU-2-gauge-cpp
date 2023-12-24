@@ -128,7 +128,7 @@ struct Lattice
     float site_action(int size, int i1, int i2, int i3, int i4, int direct1)
     {
         float S = 0;
-        if (size = 1)
+        if (size == 1)
         {
             S += 12;
         }
