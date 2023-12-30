@@ -43,6 +43,7 @@ struct a_array
 	}
 	void init(bool ini_cond = 0)
 	{
+		std::vector<float> elem;
 		for (int i1 = 0; i1 < Lsize; i1++)
 		{
 			for (int i2 = 0; i2 < Lsize; i2++)
@@ -56,14 +57,13 @@ struct a_array
 							int linknumb = getIndex(i1, i2, i3, i4, i5);
 							if (ini_cond == 0)
 							{
-								Setlink(linknumb, 1, 0, 0, 0);
+								elem = {1, 0, 0, 0};
 							}
 							else
 							{
-								Setlink(linknumb, 1, 0, 0, 0);
-								// std::vector<float> elem = get_ini_rand_elem();
-								// Setlink(linknumb, elem[0], elem[1], elem[2], elem[3]);
+								elem = get_ini_rand_elem();
 							}
+							Setlink(linknumb, elem[0], elem[1], elem[2], elem[3]);
 						}
 					}
 				}
@@ -72,6 +72,5 @@ struct a_array
 	}
 	int Lsize;
 	std::vector<std::vector<float>> data;
-	// std::vector<float> data;
 };
 #endif

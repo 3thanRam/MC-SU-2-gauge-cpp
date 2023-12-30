@@ -102,21 +102,8 @@ float Trace(std::vector<float> Ulist)
     std::vector<float> Prod(Ulist.end() - 4, Ulist.end());
     for (int u = 4; u < Ulist.size(); u += 4)
     {
-        // std::cout << u << " " << u + 4 << " " << Ulist.size() << std::endl;
         std::vector<float> vectu(Ulist.end() - u - 4, Ulist.end() - u);
-        // for (int d = 0; d < 4; d++)
-        //{
-        //     std::cout << vectu[d] << std::endl;
-        // }
-
         Prod = Paulimult(vectu, Prod);
-        // for (int d = 0; d < 4; d++)
-        //{
-        //     std::cout << Prod[d] << std::endl;
-        // }
-        // std::cout << "" << std::endl;
     }
-    // std::cout << Prod[0] << "\n"
-    //           << std::endl;
     return (2 * Prod[0]);
 }
