@@ -18,12 +18,12 @@ def DRAW(location):
         Xlabel,Ylabel,title,b,t,numbplots=data_loaded["Xlabel"],data_loaded["Ylabel"],data_loaded["title"],data_loaded["b"],data_loaded["t"],data_loaded["numbplots"]
         VALS=np.array(data_loaded["plots"][:numbplots])
     ax=plt.subplot(121)
-    Grsetup(ax,Xlabel,Ylabel,title,b,1)
     for p in range(numbplots):
         xdata,ydata=VALS[p,:,0],VALS[p,:,1]
         color=COLORS[p]
         ax.plot(xdata,ydata,color=color,label=data_loaded["graphinfo"][p])
-    ax.legend()
+    Grsetup(ax,Xlabel,Ylabel,title,b,1)
+    plt.tight_layout()
     plt.show()
 
 DRAW(path+'/graphdata/json_data.json')

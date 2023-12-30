@@ -8,18 +8,18 @@
 
 #ifndef UTIL
 #define UTIL
-std::vector<float> get_ini_rand_elem();
-float Random();
-int Choice(float param);
+std::vector<double> get_ini_rand_elem();
+double Random();
+int Choice(double param);
 int Mod(int a, int b);
 extern std::random_device rd;
 extern std::default_random_engine generator;
-extern std::uniform_real_distribution<float> unidistribution;
-float get_ao(float beta, float k);
-std::vector<float> PauliInv(std::vector<float> a);
-std::vector<float> Paulimult(std::vector<float> Ma, std::vector<float> Mb);
-float PauliDet(std::vector<float> Ulink);
-std::vector<float> Rotate_3Dvector_random(std::vector<float> vect);
-float Trace(std::vector<float> Ulist);
+extern std::uniform_real_distribution<double> unidistribution;
+double get_ao(double beta, double k);
+std::vector<double> PauliInv(std::vector<double> a);
+std::vector<double> Paulimult(std::vector<double> Ma, std::vector<double> Mb);
+double PauliDet(std::vector<double> Ulink);
+std::vector<double> Rotate_3Dvector_random(std::vector<double> vect);
+double Trace(std::vector<double> Ulist);
 
 #endif

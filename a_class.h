@@ -15,9 +15,9 @@ using namespace glm;
 struct a_array
 {
 	a_array(){};
-	a_array(int Lsize) : Lsize(Lsize), data(pow(Lsize, 4) * 16, std::vector<float>(4)) {}
+	a_array(int Lsize) : Lsize(Lsize), data(pow(Lsize, 4) * 16, std::vector<double>(4)) {}
 
-	std::vector<float> &at(int i1, int i2, int i3, int i4, int i5)
+	std::vector<double> &at(int i1, int i2, int i3, int i4, int i5)
 	{
 		int gind = getIndex(i1, i2, i3, i4, i5);
 		return data[gind];
@@ -33,7 +33,7 @@ struct a_array
 
 		return i1 * 4 * pow(Lsize, 3) + i2 * 4 * pow(Lsize, 2) + i3 * 4 * Lsize + i4 * 4 + i5;
 	}
-	void Setlink(int linknumb, float elemw, float elemx, float elemy, float elemz)
+	void Setlink(int linknumb, double elemw, double elemx, double elemy, double elemz)
 	{
 
 		data[linknumb][0] = elemw;
@@ -43,7 +43,7 @@ struct a_array
 	}
 	void init(bool ini_cond = 0)
 	{
-		std::vector<float> elem;
+		std::vector<double> elem;
 		for (int i1 = 0; i1 < Lsize; i1++)
 		{
 			for (int i2 = 0; i2 < Lsize; i2++)
@@ -71,6 +71,6 @@ struct a_array
 		}
 	}
 	int Lsize;
-	std::vector<std::vector<float>> data;
+	std::vector<std::vector<double>> data;
 };
 #endif
