@@ -26,4 +26,4 @@ def DRAW(location):
     plt.tight_layout()
     plt.show()
 
-DRAW(path+'/graphdata/json_data.json')
+DRAW(path.removesuffix("/plotting")+'/graphdata/json_data.json')

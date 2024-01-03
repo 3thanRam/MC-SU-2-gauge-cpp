@@ -34,7 +34,7 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta)
     Jdata["title"] = "Average plaquette as a function of\n Number of iterations\n for several lattice sizes & fixed beta=" + Beta_str;
     Jdata["b"] = 0;
     Jdata["t"] = 1;
-    int Nmode = 1;
+    int Nmode = 2;
     int Np = Nmode * Nlist.size();
     Jdata["numbplots"] = Np;
     std::vector<std::string> graphinfo(Np);
@@ -42,7 +42,7 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta)
     for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
     {
         Latt_data = Lattice_calculation(Nlist, Ini_mode, Iterations, Beta, 0);
-        std::cout << "Drawing" << std::endl;
+        std::cout << "Sorting datapoints" << std::endl;
         for (int n = 0; n < Nlist.size(); n++)
         {
             std::stringstream ginfo;

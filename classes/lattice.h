@@ -1,4 +1,4 @@
-#include "a_class.h"
+#include "../classes/a_class.h"
 
 #ifndef LATTICE
 #define LATTICE
@@ -49,90 +49,50 @@ struct Lattice
         std::vector<int> XK{Mod(Xini[0] + indshift1[0] + indshift2[0], Lattice_length), Mod(Xini[1] + indshift1[1] + indshift2[1], Lattice_length), Mod(Xini[2] + indshift1[2] + indshift2[2], Lattice_length), Mod(Xini[3] + indshift1[3] + indshift2[3], Lattice_length)};
         std::vector<int> XL{Mod(Xini[0] + indshift2[0], Lattice_length), Mod(Xini[1] + indshift2[1], Lattice_length), Mod(Xini[2] + indshift2[2], Lattice_length), Mod(Xini[3] + indshift2[3], Lattice_length)};
         std::vector<int> Uarg;
-        for (int ws = 0; ws < Wsize; ws++)
+
+        std::vector<int> dparam{d1, d2, d1, d2};
+        std::vector<int> signdparam{signd1, signd2, -signd1, -signd2};
+        std::vector<std::vector<int>> Xparam = {Xini, XJ, XK, XL};
+
+        for (int Unumb = 0; Unumb < 4; Unumb++)
         {
-            Uarg = Uargs(Xini, ws, d1, signd1);
-            w = Uarg[0];
-            x = Uarg[1];
-            y = Uarg[2];
-            z = Uarg[3];
-            if (signd1 > 0)
+            for (int ws = 0; ws < Wsize; ws++)
             {
-                a_elem = a.at(w, x, y, z, d1);
+                Uarg = Uargs(Xparam[Unumb], ws, dparam[Unumb], signdparam[Unumb]);
+                w = Uarg[0];
+                x = Uarg[1];
+                y = Uarg[2];
+                z = Uarg[3];
+                if (signdparam[Unumb] > 0)
+                {
+                    a_elem = a.at(w, x, y, z, dparam[Unumb]);
+                }
+                else
+                {
+                    a_elem = PauliInv(a.at(w, x, y, z, dparam[Unumb]));
+                }
+                Ulist.insert(Ulist.end(), a_elem.begin(), a_elem.end());
             }
-            else
-            {
-                a_elem = PauliInv(a.at(w, x, y, z, d1));
-            }
-            Ulist.insert(Ulist.end(), a_elem.begin(), a_elem.end());
-        }
-        for (int ws = 0; ws < Wsize; ws++)
-        {
-            Uarg = Uargs(XJ, ws, d2, signd2);
-            w = Uarg[0];
-            x = Uarg[1];
-            y = Uarg[2];
-            z = Uarg[3];
-            if (signd2 > 0)
-            {
-                a_elem = a.at(w, x, y, z, d2);
-            }
-            else
-            {
-                a_elem = PauliInv(a.at(w, x, y, z, d2));
-            }
-            Ulist.insert(Ulist.end(), a_elem.begin(), a_elem.end());
-        }
-        for (int ws = 0; ws < Wsize; ws++)
-        {
-            Uarg = Uargs(XK, ws, d1, -signd1);
-            w = Uarg[0];
-            x = Uarg[1];
-            y = Uarg[2];
-            z = Uarg[3];
-            if (signd1 > 0)
-            {
-                a_elem = PauliInv(a.at(w, x, y, z, d1));
-            }
-            else
-            {
-                a_elem = a.at(w, x, y, z, d1);
-            }
-            Ulist.insert(Ulist.end(), a_elem.begin(), a_elem.end());
-        }
-        for (int ws = 0; ws < Wsize; ws++)
-        {
-            Uarg = Uargs(XL, ws, d2, -signd2);
-            w = Uarg[0];
-            x = Uarg[1];
-            y = Uarg[2];
-            z = Uarg[3];
-            if (signd2 > 0)
-            {
-                a_elem = PauliInv(a.at(w, x, y, z, d2));
-            }
-            else
-            {
-                a_elem = a.at(w, x, y, z, d2);
-            }
-            Ulist.insert(Ulist.end(), a_elem.begin(), a_elem.end());
         }
         return (Ulist);
     }
     double site_action(int size, int i1, int i2, int i3, int i4, int direct1)
     {
         double S = 12 * (size == 1);
-        for (int revd1 = 0; revd1 < 2; revd1++)
+        double si;
+
+        for (int direct2 = 0; direct2 < 4; direct2++)
         {
-            for (int direct2 = 0; direct2 < 4; direct2++)
+            if (direct2 == direct1)
             {
-                if (direct2 == direct1)
-                {
-                    continue;
-                }
+                continue;
+            }
+            for (int revd1 = 0; revd1 < 2; revd1++)
+            {
                 for (int revd2 = 0; revd2 < 2; revd2++)
                 {
-                    S += 0.5 * pow(-1, size == 1) * Trace(Neighbours(i1, i2, i3, i4, direct1, direct2, pow(-1, revd1), pow(-1, revd2), size));
+                    si = 0.5 * pow(-1, size == 1) * Trace(Neighbours(i1, i2, i3, i4, direct1, direct2, pow(-1, revd1), pow(-1, revd2), size));
+                    S += si;
                 }
             }
         }
@@ -141,7 +101,6 @@ struct Lattice
     double Action(int size = 1)
     {
         double S = 0;
-        double si;
         for (int i1 = 0; i1 < Lattice_length; i1++)
         {
             for (int i2 = 0; i2 < Lattice_length; i2++)
@@ -152,8 +111,7 @@ struct Lattice
                     {
                         for (int i5 = 0; i5 < 4; i5++)
                         {
-                            si = site_action(size, i1, i2, i3, i4, i5);
-                            S += si;
+                            S += site_action(size, i1, i2, i3, i4, i5);
                         }
                     }
                 }
@@ -221,7 +179,6 @@ struct Lattice
         std::vector<double> elem;
         int linknumb;
         a_array New_a(Lattice_length);
-        New_a.init(0);
 
         for (int i1 = 0; i1 < Lattice_length; i1++)
         {
@@ -235,7 +192,7 @@ struct Lattice
                         {
                             elem = New_element(Beta, i1, i2, i3, i4, i5);
                             linknumb = a.getIndex(i1, i2, i3, i4, i5);
-                            New_a.Setlink(linknumb, elem[0], elem[1], elem[2], elem[3]);
+                            New_a.Setlink(linknumb, elem);
                         }
                     }
                 }

@@ -2,11 +2,12 @@
 std::random_device rd;
 std::default_random_engine generator(rd());
 std::uniform_real_distribution<double> unidistribution(0, 1);
+int randiter = 10;
 
 double Random()
 {
     double R;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < randiter; ++i)
     {
         R = unidistribution(generator);
     }
@@ -14,10 +15,10 @@ double Random()
 }
 int Choice(double proba1)
 {
-    std::discrete_distribution<int> discrdistribution{proba1, (1 - proba1)};
+    std::discrete_distribution<int> discrdistribution{proba1, 1 - proba1};
     // auto gen = std::bind(std::discrete_distribution<int>{1, 0.5}, std::default_random_engine(rd()));
     bool b;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < randiter; ++i)
     {
         b = discrdistribution(generator);
     }
@@ -28,32 +29,53 @@ std::vector<double> get_ini_rand_elem()
 {
     std::vector<double> elem;
     elem.push_back(Random() * 2 - 1);
+    double avv = sqrt(1 - pow(elem[0], 2)) / sqrt(3);
+    std::vector<double> av = {avv, avv, avv};
+    std::vector<double> a_vect = Rotate_3Dvector_random(av);
+    elem.push_back(a_vect[0]);
+    elem.push_back(a_vect[1]);
+    elem.push_back(a_vect[2]);
     return elem;
 }
 
 std::vector<double> Rotate_3Dvector_random(std::vector<double> vect)
 {
-    double angle = Random() * 2 * 3.14159;
-    double C = cos(angle);
-    double S = sin(angle);
     std::vector<double> rotvect;
-    rotvect.push_back(pow(C, 2) * vect[0] - S * vect[1] + C * S * vect[2]);
-    rotvect.push_back(C * S * vect[0] + C * vect[1] + pow(S, 2) * vect[2]);
-    rotvect.push_back(-S * vect[0] + C * vect[2]);
+    double alpha, beta, gamma, a, b, c, d, e, f, g, h, i;
+
+    alpha = Random() * 2 * 3.14159;
+    beta = Random() * 2 * 3.14159;
+    gamma = Random() * 2 * 3.14159;
+
+    a = cos(alpha) * cos(beta);
+    b = cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma);
+    c = cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma);
+
+    d = sin(alpha) * cos(beta);
+    e = sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma);
+    f = sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma);
+
+    g = -sin(beta);
+    h = cos(beta) * sin(gamma);
+    i = cos(beta) * cos(gamma);
+
+    rotvect.push_back(a * vect[0] + b * vect[1] + c * vect[2]);
+    rotvect.push_back(d * vect[0] + e * vect[1] + f * vect[2]);
+    rotvect.push_back(g * vect[0] + h * vect[2] + i * vect[2]);
     return (rotvect);
 }
 
 double get_ao(double beta, double k)
 {
-    int R = 1;
+    int Reject = 1;
     double expo = exp(-2 * beta * k);
     double ao;
     double x;
-    while (R == 1)
+    while (Reject == 1)
     {
         x = expo + Random() * (1 - expo);
         ao = 1 + (log(x) / (beta * k));
-        R = Choice(1 - sqrt(1 - pow(ao, 2)));
+        Reject = Choice(sqrt(1 - pow(ao, 2)));
     }
     return (ao);
 }
@@ -79,8 +101,6 @@ std::vector<double> Paulimult(std::vector<double> Ma, std::vector<double> Mb)
     double Mb1 = Mb[1];
     double Mb2 = Mb[2];
     double Mb3 = Mb[3];
-
-    // double Mb0, Mb1, Mb2, Mb3 = Mb[0], Mb[1], Mb[2], Mb[3];
 
     MProd.push_back(Ma0 * Mb0 - (Ma1 * Mb1 + Ma2 * Mb2 + Ma3 * Mb3));
     MProd.push_back((Ma0 * Mb1 + Ma1 * Mb0) - (Ma2 * Mb3 - Ma3 * Mb2));
