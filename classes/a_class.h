@@ -16,14 +16,13 @@ using namespace glm;
 struct a_array
 {
 	a_array(){};
-	a_array(int Lsize) : Lsize(Lsize), numb4vect(pow(Lsize, 4) * 16), data(numb4vect, std::vector<double>(4)) {}
+	a_array(int Lsize) : Lsize(Lsize), numb4vect(pow(Lsize, 4) * 4), data(numb4vect, std::vector<double>(4)) {}
 
 	std::vector<double> &at(int i1, int i2, int i3, int i4, int i5)
 	{
 		int gind = getIndex(i1, i2, i3, i4, i5);
 		return data[gind];
 	}
-
 	int getIndex(int i1, int i2, int i3, int i4, int i5)
 	{
 		assert(i1 >= 0 && i1 < Lsize);

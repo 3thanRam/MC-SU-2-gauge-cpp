@@ -8,31 +8,26 @@ void Saveas(json Jdata, std::string file_name)
     file << std::setw(4) << Jdata << std::endl;
 }
 
-std::vector<std::vector<double>> Lattice_calculation(std::vector<int> N, int Ini_mode, int Imax, double Beta)
+std::vector<double> Lattice_Plaqcalculation(int N, bool inimode, int Imax, double Beta, int Multithreadmode = 0)
 {
-    std::vector<std::vector<double>> lattdata;
-    for (int n : N)
-    {
-        Lattice lattice(n, Ini_mode, 1);
-        lattice.Heatbath(Imax, Beta);
-        lattdata.push_back(lattice.Avplaq_data);
-    }
-    return (lattdata);
+    Lattice lattice(N, inimode, Multithreadmode);
+    lattice.Heatbath(Imax, Beta);
+    return lattice.Avplaq_data;
 }
 
-std::vector<std::vector<double>> Lattice_calculation2(int N, int Imax, std::vector<double> Betalist)
+std::vector<std::vector<double>> Lattice_calculation2(int N, int Imax, std::vector<double> Betalist, int Multithreadmode = 0)
 {
     std::vector<std::vector<double>> lattdata;
-    for (int beta : Betalist)
+    for (double beta : Betalist)
     {
-        Lattice lattice(N, 0, 1);
+        Lattice lattice(N, 0, Multithreadmode);
         lattice.Heatbath(Imax, beta);
         lattdata.push_back(lattice.Avplaq_data);
     }
     return (lattdata);
 }
 
-void Graph1(std::vector<int> Nlist, int Iterations, double Beta)
+void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithreadmode)
 {
 
     std::vector<std::vector<double>> Latt_data;
@@ -50,15 +45,39 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta)
     Jdata["title"] = "Average plaquette as a function of\n Number of iterations\n for several lattice sizes & fixed beta=" + Beta_str;
     Jdata["b"] = 0;
     Jdata["t"] = 1;
-    int Nmode = 2;
+    int Nmode = 1;
     int Np = Nmode * Nlist.size();
     Jdata["numbplots"] = Np;
     std::vector<std::string> graphinfo(Np);
+    std::vector<std::future<std::vector<double>>> futures;
+
+    if (Multithreadmode == 1)
+    {
+        for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
+        {
+            for (int n = 0; n < Nlist.size(); n++)
+            {
+                futures.push_back(std::async(Lattice_Plaqcalculation, Nlist[n], Ini_mode, Iterations, Beta, Multithreadmode));
+            }
+        }
+        for (auto &f : futures)
+        {
+            Latt_data.push_back(f.get());
+        }
+    }
+    else
+    {
+        for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
+        {
+            for (int n = 0; n < Nlist.size(); n++)
+            {
+                Latt_data.push_back(Lattice_Plaqcalculation(Nlist[n], Ini_mode, Iterations, Beta, Multithreadmode));
+            }
+        }
+    }
 
     for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
     {
-        Latt_data = Lattice_calculation(Nlist, Ini_mode, Iterations, Beta);
-        std::cout << "Sorting datapoints" << std::endl;
         for (int n = 0; n < Nlist.size(); n++)
         {
             std::stringstream ginfo;
@@ -66,7 +85,7 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta)
             graphinfo[Ini_mode * Nlist.size() + n] = ginfo.str();
             for (int i = 0; i < Iterations; i++)
             {
-                datapts[Ini_mode * Nlist.size() + n].push_back(std::make_pair(i, Latt_data[n][i]));
+                datapts[Ini_mode * Nlist.size() + n].push_back(std::make_pair(i, Latt_data[Ini_mode * Nlist.size() + n][i]));
             }
         }
     }
@@ -75,7 +94,7 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta)
     Saveas(Jdata, "json_data1");
 }
 
-void Graph2(int Nsize, int Iterations, std::vector<double> Betalist)
+void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multithreadmode)
 {
     json Jdata;
     std::vector<std::vector<double>> Latt_data;
@@ -94,7 +113,7 @@ void Graph2(int Nsize, int Iterations, std::vector<double> Betalist)
     Jdata["t"] = 1;
     Jdata["numbplots"] = Betalist.size();
 
-    Latt_data = Lattice_calculation2(Nsize, Iterations, Betalist);
+    Latt_data = Lattice_calculation2(Nsize, Iterations, Betalist, Multithreadmode);
     std::cout << "Sorting datapoints" << std::endl;
     for (int b = 0; b < Betalist.size(); b++)
     {

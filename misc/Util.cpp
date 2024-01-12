@@ -28,6 +28,7 @@ int Choice(double proba1)
 std::vector<double> get_ini_rand_elem()
 {
     std::vector<double> elem;
+    elem.reserve(4);
     elem.push_back(Random() * 2 - 1);
     double avv = sqrt(1 - pow(elem[0], 2)) / sqrt(3);
     std::vector<double> av = {avv, avv, avv};
@@ -38,7 +39,7 @@ std::vector<double> get_ini_rand_elem()
     return elem;
 }
 
-std::vector<double> Rotate_3Dvector_random(std::vector<double> vect)
+std::vector<double> Rotate_3Dvector_random(std::vector<double> &vect)
 {
     std::vector<double> rotvect;
     double alpha, beta, gamma, a, b, c, d, e, f, g, h, i;
@@ -80,44 +81,27 @@ double get_ao(double beta, double k)
     return (ao);
 }
 
-std::vector<double> PauliInv(std::vector<double> a)
-{
-    for (int d = 1; d < 4; d++)
-    {
-        a[d] = -a[d];
-    }
-    return (a);
-}
-
-std::vector<double> Paulimult(std::vector<double> Ma, std::vector<double> Mb)
+std::vector<double> Paulimult(const std::vector<double> &Ma, const std::vector<double> &Mb)
 {
     std::vector<double> MProd;
-    double Ma0 = Ma[0];
-    double Ma1 = Ma[1];
-    double Ma2 = Ma[2];
-    double Ma3 = Ma[3];
+    MProd.reserve(4);
 
-    double Mb0 = Mb[0];
-    double Mb1 = Mb[1];
-    double Mb2 = Mb[2];
-    double Mb3 = Mb[3];
-
-    MProd.push_back(Ma0 * Mb0 - (Ma1 * Mb1 + Ma2 * Mb2 + Ma3 * Mb3));
-    MProd.push_back((Ma0 * Mb1 + Ma1 * Mb0) - (Ma2 * Mb3 - Ma3 * Mb2));
-    MProd.push_back((Ma0 * Mb2 + Ma2 * Mb0) - (Ma3 * Mb1 - Ma1 * Mb3));
-    MProd.push_back((Ma0 * Mb3 + Ma3 * Mb0) - (Ma1 * Mb2 - Ma2 * Mb1));
-    return (MProd);
+    MProd.emplace_back(Ma[0] * Mb[0] - (Ma[1] * Mb[1] + Ma[2] * Mb[2] + Ma[3] * Mb[3]));
+    MProd.emplace_back(Ma[0] * Mb[1] + Ma[1] * Mb[0] - (Ma[2] * Mb[3] - Ma[3] * Mb[2]));
+    MProd.emplace_back(Ma[0] * Mb[2] + Ma[2] * Mb[0] - (Ma[3] * Mb[1] - Ma[1] * Mb[3]));
+    MProd.emplace_back(Ma[0] * Mb[3] + Ma[3] * Mb[0] - (Ma[1] * Mb[2] - Ma[2] * Mb[1]));
+    return MProd;
 }
 int Mod(int a, int b)
 {
-    int ret = a % b;
-    return ret >= 0 ? ret : ret + b;
+    const int r = a % b;
+    return r < 0 ? r + b : r;
 }
-double PauliDet(std::vector<double> Ulink)
+double PauliDet(std::vector<double> &Ulink)
 {
-    return (pow(Ulink[0], 2) + pow(Ulink[1], 2) + pow(Ulink[2], 2) + pow(Ulink[3], 2));
+    return pow(Ulink[0], 2) + pow(Ulink[1], 2) + pow(Ulink[2], 2) + pow(Ulink[3], 2);
 }
-double Trace(std::vector<double> Ulist)
+double Trace(std::vector<double> const &Ulist)
 {
     std::vector<double> Prod(Ulist.end() - 4, Ulist.end());
     for (int u = 4; u < Ulist.size(); u += 4)
@@ -125,5 +109,5 @@ double Trace(std::vector<double> Ulist)
         std::vector<double> vectu(Ulist.end() - u - 4, Ulist.end() - u);
         Prod = Paulimult(vectu, Prod);
     }
-    return (2 * Prod[0]);
+    return 2 * Prod[0];
 }

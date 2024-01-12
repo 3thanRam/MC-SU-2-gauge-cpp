@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 COLORS=["red","green","blue","purple","orange","black"]
+Lines=["-","--"]
+
 path=os.path.dirname(os.path.abspath(__file__))
 def Grsetup(ax,Xlabel,Ylabel,title,b,t):
     ax.set_xlabel(Xlabel)
@@ -20,10 +22,16 @@ def DRAW(location):
     ax=plt.subplot(121)
     for p in range(numbplots):
         xdata,ydata=VALS[p,:,0],VALS[p,:,1]
-        color=COLORS[p]
-        ax.plot(xdata,ydata,color=color,label=data_loaded["graphinfo"][p])
+        graphinfo=data_loaded["graphinfo"][p]
+        if location[-6]=="1":
+            N=int(np.log2(int(graphinfo[4])))
+            inimode=int(graphinfo[-1])
+            linestyle=Lines[inimode]
+            color=COLORS[N]
+        else:
+            linestyle=Lines[0]
+            color=COLORS[p]
+        ax.plot(xdata,ydata,color=color,linestyle=linestyle,label=graphinfo)
     Grsetup(ax,Xlabel,Ylabel,title,b,1)
     plt.tight_layout()
     plt.show()
-
-#DRAW(path.removesuffix("/plotting")+'/graphdata/json_data2.json')

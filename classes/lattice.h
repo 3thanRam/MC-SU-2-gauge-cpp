@@ -3,22 +3,53 @@
 #ifndef LATTICE
 #define LATTICE
 
-//  The lattice
+template <size_t N>
+using size = std::integral_constant<size_t, N>;
 
+template <typename T, size_t N>
+class counter : std::array<T, N>
+{
+    using A = std::array<T, N>;
+    A b, e;
+
+    template <size_t I = 0>
+    void inc(size<I> = size<I>())
+    {
+        if (++_<I>() != std::get<I>(e))
+            return;
+
+        _<I>() = std::get<I>(b);
+        inc(size<I + 1>());
+    }
+
+    void inc(size<N - 1>) { ++_<N - 1>(); }
+
+public:
+    counter(const A &b, const A &e) : A(b), b(b), e(e) {}
+
+    counter &operator++() { return inc(), *this; }
+
+    operator bool() const { return _<N - 1>() != std::get<N - 1>(e); }
+
+    template <size_t I>
+    T &_() { return std::get<I>(*this); }
+
+    template <size_t I>
+    constexpr const T &_() const { return std::get<I>(*this); }
+};
 struct Lattice
 {
-    // a_array(int Lsize) : Lsize(Lsize), data(4, std::vector<double>(pow(Lsize, 4) * 16)) {}
-    int Lattice_length;
-    bool ini_cond;
-    int Numb_cpu;
-    int totnumb_orientlinks;
-    int totnumb_elements;
-    int Nplaq;
+    unsigned int Lattice_length; // length of the lattice
+    bool ini_cond;               // initial state of array a: {1,0,0,0}(0) or random(1)
+    int totnumb_orientlinks;     // 4 * pow(Lat_Length_set, 4)
+    int totnumb_elements;        // 4*totnumb_orientlinks
+    int Nplaq;                   // degen(direction1)*degen(direction2)=2*(3*2) -> =12 * totnumb_orientlinks
+    int Multithreadmode;
     a_array a;
     std::vector<double> Avplaq_data;
     std::vector<double> Wloop_data;
-    Lattice(){};
-    Lattice(int Lat_Length_set, bool ini_cond_set, int Numb_cpu_set) : Lattice_length(Lat_Length_set), ini_cond(ini_cond_set), Numb_cpu(Numb_cpu_set), a(Lat_Length_set), totnumb_orientlinks(4 * pow(Lat_Length_set, 4)), totnumb_elements(4 * totnumb_orientlinks), Nplaq(18 * totnumb_orientlinks)
+    Lattice() : Lattice_length(0){};
+    Lattice(int Lat_Length_set, bool ini_cond_set, int Multithreadmodeset) : Lattice_length(Lat_Length_set), ini_cond(ini_cond_set), a(Lat_Length_set), totnumb_orientlinks(4 * pow(Lat_Length_set, 4)), totnumb_elements(4 * totnumb_orientlinks), Nplaq(12 * totnumb_orientlinks), Multithreadmode(Multithreadmodeset)
     {
         a.init(ini_cond);
     }
@@ -35,25 +66,27 @@ struct Lattice
     }
     std::vector<double> Neighbours(int ind1, int ind2, int ind3, int ind4, int d1, int d2, int signd1, int signd2, int Wsize = 1)
     {
-        std::vector<double> Ulist;
+        std::vector<double> Ulist(16 * Wsize);
         std::vector<double> a_elem;
+        a_elem.reserve(4);
         std::vector<int> Xini{ind1, ind2, ind3, ind4};
         int w, x, y, z;
-        auto Uargs = [this](std::vector<int> Xijkl, int Ws, int dd, int signdd)
-        {std::vector<int> outvec;for(int d=0;d<4;d++){if(signdd>0){outvec.push_back(Mod(Xijkl[d]+Ws*(d==dd),Lattice_length));}else{outvec.push_back(Mod(Xijkl[d]-(1+Ws)*(d==dd),Lattice_length));}}return(outvec); };
+        auto Uargs = [this](std::vector<int> const &Xijkl, int Ws, int dd, int signdd)
+        {std::vector<int> outvec(4);for(int d=0;d<4;d++){if(signdd>0){outvec[d]=Mod(Xijkl[d]+Ws*(d==dd),Lattice_length);}else{outvec[d]=Mod(Xijkl[d]-(1+Ws)*(d==dd),Lattice_length);}}return(outvec); };
 
-        std::vector<int> indshift1{(d1 == 0), (d1 == 1), (d1 == 2), (d1 == 3)};
-        std::vector<int> indshift2{(d2 == 0), (d2 == 1), (d2 == 2), (d2 == 3)};
+        int indshift1[4] = {(d1 == 0), (d1 == 1), (d1 == 2), (d1 == 3)};
+        int indshift2[4] = {(d2 == 0), (d2 == 1), (d2 == 2), (d2 == 3)};
 
         std::vector<int> XJ{Mod(Xini[0] + indshift1[0], Lattice_length), Mod(Xini[1] + indshift1[1], Lattice_length), Mod(Xini[2] + indshift1[2], Lattice_length), Mod(Xini[3] + indshift1[3], Lattice_length)};
         std::vector<int> XK{Mod(Xini[0] + indshift1[0] + indshift2[0], Lattice_length), Mod(Xini[1] + indshift1[1] + indshift2[1], Lattice_length), Mod(Xini[2] + indshift1[2] + indshift2[2], Lattice_length), Mod(Xini[3] + indshift1[3] + indshift2[3], Lattice_length)};
         std::vector<int> XL{Mod(Xini[0] + indshift2[0], Lattice_length), Mod(Xini[1] + indshift2[1], Lattice_length), Mod(Xini[2] + indshift2[2], Lattice_length), Mod(Xini[3] + indshift2[3], Lattice_length)};
         std::vector<int> Uarg;
 
-        std::vector<int> dparam{d1, d2, d1, d2};
-        std::vector<int> signdparam{signd1, signd2, -signd1, -signd2};
+        int dparam[4] = {d1, d2, d1, d2};
+        int signdparam[4] = {signd1, signd2, -signd1, -signd2};
         std::vector<std::vector<int>> Xparam = {Xini, XJ, XK, XL};
 
+        int Uind;
         for (int Unumb = 0; Unumb < 4; Unumb++)
         {
             for (int ws = 0; ws < Wsize; ws++)
@@ -63,24 +96,25 @@ struct Lattice
                 x = Uarg[1];
                 y = Uarg[2];
                 z = Uarg[3];
-                if (signdparam[Unumb] > 0)
+                a_elem = a.at(w, x, y, z, dparam[Unumb]);
+                if (signdparam[Unumb] < 0)
                 {
-                    a_elem = a.at(w, x, y, z, dparam[Unumb]);
+                    a_elem[1] *= -1;
+                    a_elem[2] *= -1;
+                    a_elem[3] *= -1;
                 }
-                else
-                {
-                    a_elem = PauliInv(a.at(w, x, y, z, dparam[Unumb]));
-                }
-                Ulist.insert(Ulist.end(), a_elem.begin(), a_elem.end());
+                Uind = 4 * (Unumb + ws);
+                Ulist[Uind] = a_elem[0];
+                Ulist[Uind + 1] = a_elem[1];
+                Ulist[Uind + 2] = a_elem[2];
+                Ulist[Uind + 3] = a_elem[3];
             }
         }
-        return (Ulist);
+        return Ulist;
     }
     double site_action(int size, int i1, int i2, int i3, int i4, int direct1)
     {
         double S = 12 * (size == 1);
-        double si;
-
         for (int direct2 = 0; direct2 < 4; direct2++)
         {
             if (direct2 == direct1)
@@ -91,36 +125,61 @@ struct Lattice
             {
                 for (int revd2 = 0; revd2 < 2; revd2++)
                 {
-                    si = 0.5 * pow(-1, size == 1) * Trace(Neighbours(i1, i2, i3, i4, direct1, direct2, pow(-1, revd1), pow(-1, revd2), size));
-                    S += si;
+                    S += 0.5 * pow(-1, size == 1) * Trace(Neighbours(i1, i2, i3, i4, direct1, direct2, pow(-1, revd1), pow(-1, revd2), size));
                 }
             }
         }
-        return (S);
+        return S;
     }
     double Action(int size = 1)
     {
         double S = 0;
-        for (int i1 = 0; i1 < Lattice_length; i1++)
+
+        auto mp_action = [this, size](int ind4, int param3)
         {
-            for (int i2 = 0; i2 < Lattice_length; i2++)
+            double Sm = 0;
+            std::vector<double> elem;
+            counter<size_t, 3> my_counter({0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length});
+            while (my_counter)
             {
-                for (int i3 = 0; i3 < Lattice_length; i3++)
+                for (int ind3 = Lattice_length * param3 / 2; ind3 < Lattice_length * (param3 + 1) / 2; ind3++)
                 {
-                    for (int i4 = 0; i4 < Lattice_length; i4++)
-                    {
-                        for (int i5 = 0; i5 < 4; i5++)
-                        {
-                            S += site_action(size, i1, i2, i3, i4, i5);
-                        }
-                    }
+                    Sm += site_action(size, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), ind3, ind4);
                 }
+                ++my_counter;
+            }
+            return Sm;
+        };
+        if (Multithreadmode == 2)
+        {
+            std::vector<std::future<double>> futures;
+            for (int c = 0; c < 4; c++)
+            {
+                for (int c2 = 0; c2 < 2; c2++)
+                {
+                    futures.push_back(std::async(mp_action, c, c2));
+                }
+            }
+            for (auto &f : futures)
+            {
+                S += f.get();
+            }
+        }
+        else
+        {
+            counter<size_t, 5> my_counter({0, 0, 0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length, Lattice_length, 4});
+            while (my_counter)
+            {
+                S += site_action(size, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
+                ++my_counter;
             }
         }
         return (S);
     }
     void Average_plaquette()
     {
+        // Technically 4*Average plaquette since each plaquette is inserted 4 times once for each link
+        // But removed factor in accordance with article
         Avplaq_data.push_back(Action() / Nplaq);
     }
     void Wloop_expct()
@@ -146,9 +205,9 @@ struct Lattice
     }
     std::vector<double> New_element(double beta, int i1, int i2, int i3, int i4, int d1)
     {
-        std::vector<double> New_a_elem;
+        std::vector<double> New_a_elem(4);
         std::vector<double> USum{0, 0, 0, 0};
-        std::vector<double> neighprod;
+        std::vector<double> neighprod(4);
         for (int d = 0; d < 4; d++)
         {
             if (d == d1)
@@ -165,37 +224,69 @@ struct Lattice
             }
         }
         double k = sqrt(PauliDet(USum));
-        New_a_elem.push_back(get_ao(beta, k));
+        New_a_elem[0] = get_ao(beta, k);
         double avv = sqrt(1 - pow(New_a_elem[0], 2)) / sqrt(3);
         std::vector<double> av = {avv, avv, avv};
         std::vector<double> a_vect = Rotate_3Dvector_random(av);
-        New_a_elem.push_back(a_vect[0]);
-        New_a_elem.push_back(a_vect[1]);
-        New_a_elem.push_back(a_vect[2]);
+        New_a_elem[1] = a_vect[0];
+        New_a_elem[2] = a_vect[1];
+        New_a_elem[3] = a_vect[2];
         return (New_a_elem);
     }
+
     void Touchheat(double Beta)
     {
-        std::vector<double> elem;
-        int linknumb;
         a_array New_a(Lattice_length);
-
-        for (int i1 = 0; i1 < Lattice_length; i1++)
+        auto mp_touchheat = [this, Beta](int ind4, int param3)
         {
-            for (int i2 = 0; i2 < Lattice_length; i2++)
+            std::vector<std::pair<int, std::vector<double>>> mpdata;
+            mpdata.reserve(pow(Lattice_length, 4));
+            std::vector<double> elem;
+            elem.reserve(4);
+            int linknumb;
+            counter<size_t, 3> my_counter({0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length});
+            while (my_counter)
             {
-                for (int i3 = 0; i3 < Lattice_length; i3++)
+                for (int ind3 = Lattice_length * param3 / 2; ind3 < Lattice_length * (param3 + 1) / 2; ind3++)
                 {
-                    for (int i4 = 0; i4 < Lattice_length; i4++)
-                    {
-                        for (int i5 = 0; i5 < 4; i5++)
-                        {
-                            elem = New_element(Beta, i1, i2, i3, i4, i5);
-                            linknumb = a.getIndex(i1, i2, i3, i4, i5);
-                            New_a.Setlink(linknumb, elem);
-                        }
-                    }
+                    elem = New_element(Beta, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), ind3, ind4);
+                    linknumb = my_counter._<0>() * 4 * pow(Lattice_length, 3) + my_counter._<1>() * 4 * pow(Lattice_length, 2) + my_counter._<2>() * 4 * Lattice_length + ind3 * 4 + ind4;
+                    mpdata.emplace_back(std::make_pair(linknumb, elem));
                 }
+                ++my_counter;
+            }
+            return mpdata;
+        };
+        if (Multithreadmode == 2)
+        {
+            std::vector<std::future<std::vector<std::pair<int, std::vector<double>>>>> futures;
+            for (int c = 0; c < 4; c++)
+            {
+                for (int c2 = 0; c2 < 2; c2++)
+                {
+                    futures.push_back(std::async(mp_touchheat, c, c2));
+                }
+            }
+            for (auto &f : futures)
+            {
+                for (auto &elem : f.get())
+                {
+                    New_a.Setlink(std::get<0>(elem), std::get<1>(elem));
+                }
+            }
+        }
+        else
+        {
+            std::vector<double> elem;
+            elem.reserve(4);
+            int linknumb;
+            counter<size_t, 5> my_counter({0, 0, 0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length, Lattice_length, 4});
+            while (my_counter)
+            {
+                elem = New_element(Beta, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
+                linknumb = a.getIndex(my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
+                New_a.Setlink(linknumb, elem);
+                ++my_counter;
             }
         }
         a = New_a;
@@ -206,6 +297,7 @@ struct Lattice
     {
         for (int i = 0; i < Iterations; i++)
         {
+
             Touchheat(Beta);
         }
     }
