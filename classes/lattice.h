@@ -74,8 +74,8 @@ struct Lattice
         auto Uargs = [this](std::vector<int> const &Xijkl, int Ws, int dd, int signdd)
         {std::vector<int> outvec(4);for(int d=0;d<4;d++){if(signdd>0){outvec[d]=Mod(Xijkl[d]+Ws*(d==dd),Lattice_length);}else{outvec[d]=Mod(Xijkl[d]-(1+Ws)*(d==dd),Lattice_length);}}return(outvec); };
 
-        int indshift1[4] = {(d1 == 0), (d1 == 1), (d1 == 2), (d1 == 3)};
-        int indshift2[4] = {(d2 == 0), (d2 == 1), (d2 == 2), (d2 == 3)};
+        int indshift1[4] = {Wsize * (d1 == 0), Wsize * (d1 == 1), Wsize * (d1 == 2), Wsize * (d1 == 3)};
+        int indshift2[4] = {Wsize * (d2 == 0), Wsize * (d2 == 1), Wsize * (d2 == 2), Wsize * (d2 == 3)};
 
         std::vector<int> XJ{Mod(Xini[0] + indshift1[0], Lattice_length), Mod(Xini[1] + indshift1[1], Lattice_length), Mod(Xini[2] + indshift1[2], Lattice_length), Mod(Xini[3] + indshift1[3], Lattice_length)};
         std::vector<int> XK{Mod(Xini[0] + indshift1[0] + indshift2[0], Lattice_length), Mod(Xini[1] + indshift1[1] + indshift2[1], Lattice_length), Mod(Xini[2] + indshift1[2] + indshift2[2], Lattice_length), Mod(Xini[3] + indshift1[3] + indshift2[3], Lattice_length)};
@@ -103,7 +103,7 @@ struct Lattice
                     a_elem[2] *= -1;
                     a_elem[3] *= -1;
                 }
-                Uind = 4 * (Unumb + ws);
+                Uind = 4 * (Unumb * Wsize + ws);
                 Ulist[Uind] = a_elem[0];
                 Ulist[Uind + 1] = a_elem[1];
                 Ulist[Uind + 2] = a_elem[2];
@@ -174,7 +174,7 @@ struct Lattice
                 ++my_counter;
             }
         }
-        return (S);
+        return S;
     }
     void Average_plaquette()
     {
@@ -184,19 +184,7 @@ struct Lattice
     }
     void Wloop_expct()
     {
-        int Wmax;
-        if (Lattice_length == 6 || Lattice_length == 4)
-        {
-            Wmax = Lattice_length;
-        }
-        else if (Lattice_length == 2)
-        {
-            Wmax = 3;
-        }
-        else
-        {
-            Wmax = 7;
-        }
+        int Wmax = MaxWilsonloop(Lattice_length);
         Wloop_data.push_back(1 - Action() / Nplaq);
         for (int WS = 2; WS < Wmax; WS++)
         {

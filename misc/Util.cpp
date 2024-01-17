@@ -111,3 +111,19 @@ double Trace(std::vector<double> const &Ulist)
     }
     return 2 * Prod[0];
 }
+
+int MaxWilsonloop(int latsize)
+{
+    if (latsize == 6 || latsize == 4)
+    {
+        return latsize;
+    }
+    else if (latsize == 2)
+    {
+        return 3;
+    }
+    else
+    {
+        return 7;
+    }
+};

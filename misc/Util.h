@@ -23,5 +23,6 @@ std::vector<double> Paulimult(const std::vector<double> &Ma, const std::vector<d
 double PauliDet(std::vector<double> &Ulink);
 std::vector<double> Rotate_3Dvector_random(std::vector<double> &vect);
 double Trace(std::vector<double> const &Ulist);
+int MaxWilsonloop(int latsize);
 
 #endif

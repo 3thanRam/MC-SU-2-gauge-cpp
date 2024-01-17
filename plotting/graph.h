@@ -18,5 +18,7 @@ void Saveas(json Jdata, std::string file_name);
 
 void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithreadmode);
 void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multithreadmode);
+void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithreadmode);
+void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multithreadmode);
 
 #endif
