@@ -240,6 +240,7 @@ void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
     Jdata["title"] = "Wilson loop as a function of $\\beta$";
     Jdata["b"] = 0;
     Jdata["t"] = 1;
+    Jdata["fixed"] = {Nsize, Iterations};
 
     Jdata["numbplots"] = Nloops;
     std::vector<std::string> graphinfo(Nloops);

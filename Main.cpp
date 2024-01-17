@@ -5,13 +5,11 @@
 void pythonplot(std::string whichgraph)
 {
     const char *pdrawfile = "plotting/graphdraw.py";
-    std::string fullpathstr = "fullpath=path.removesuffix('/plotting')+'/graphdata/json_data" + whichgraph + ".json'";
-
     FILE *file = fopen(pdrawfile, "r");
     Py_Initialize();
     PyRun_SimpleFile(file, pdrawfile);
-    PyRun_SimpleString((fullpathstr).data());
-    PyRun_SimpleString("DRAW(fullpath)");
+    PyRun_SimpleString(("Graphnumb=" + whichgraph).data());
+    PyRun_SimpleString("DRAW(Graphnumb)");
     Py_Finalize();
 }
 

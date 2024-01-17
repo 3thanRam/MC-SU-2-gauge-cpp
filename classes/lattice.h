@@ -3,40 +3,6 @@
 #ifndef LATTICE
 #define LATTICE
 
-template <size_t N>
-using size = std::integral_constant<size_t, N>;
-
-template <typename T, size_t N>
-class counter : std::array<T, N>
-{
-    using A = std::array<T, N>;
-    A b, e;
-
-    template <size_t I = 0>
-    void inc(size<I> = size<I>())
-    {
-        if (++_<I>() != std::get<I>(e))
-            return;
-
-        _<I>() = std::get<I>(b);
-        inc(size<I + 1>());
-    }
-
-    void inc(size<N - 1>) { ++_<N - 1>(); }
-
-public:
-    counter(const A &b, const A &e) : A(b), b(b), e(e) {}
-
-    counter &operator++() { return inc(), *this; }
-
-    operator bool() const { return _<N - 1>() != std::get<N - 1>(e); }
-
-    template <size_t I>
-    T &_() { return std::get<I>(*this); }
-
-    template <size_t I>
-    constexpr const T &_() const { return std::get<I>(*this); }
-};
 struct Lattice
 {
     unsigned int Lattice_length; // length of the lattice
@@ -49,11 +15,13 @@ struct Lattice
     std::vector<double> Avplaq_data;
     std::vector<double> Wloop_data;
     Lattice() : Lattice_length(0){};
-    Lattice(int Lat_Length_set, bool ini_cond_set, int Multithreadmodeset) : Lattice_length(Lat_Length_set), ini_cond(ini_cond_set), a(Lat_Length_set), totnumb_orientlinks(4 * pow(Lat_Length_set, 4)), totnumb_elements(4 * totnumb_orientlinks), Nplaq(12 * totnumb_orientlinks), Multithreadmode(Multithreadmodeset)
+    Lattice(int Lattice_length, bool ini_cond, int Multithreadmode) : Lattice_length(Lattice_length), ini_cond(ini_cond), Multithreadmode(Multithreadmode), a(Lattice_length), totnumb_orientlinks(4 * pow(Lattice_length, 4)), totnumb_elements(4 * totnumb_orientlinks), Nplaq(12 * totnumb_orientlinks)
     {
         a.init(ini_cond);
     }
-
+    /** Returns the product of links to (ind1,ind2,ind3,ind4) (itself excluded) forming a plaquette
+     * in plane (d1,d2) with corresponding directions  (+1,signd2)
+     */
     std::vector<double> Neighprod(int ind1, int ind2, int ind3, int ind4, int d1, int d2, int revd2)
     {
         std::vector<double> Ulinks = Neighbours(ind1, ind2, ind3, ind4, d1, d2, 1, pow(-1, revd2));
@@ -64,6 +32,10 @@ struct Lattice
         std::vector<double> Uprod = Paulimult(U1, Paulimult(U2, U3));
         return (Uprod);
     }
+    /** Returns ordered elements of links forming wilson loop
+     *  of size Wsize starting at (ind1,ind2,ind3,ind4)
+     * in plane (d1,d2) with corresponding directions  signd1,signd2
+     */
     std::vector<double> Neighbours(int ind1, int ind2, int ind3, int ind4, int d1, int d2, int signd1, int signd2, int Wsize = 1)
     {
         std::vector<double> Ulist(16 * Wsize);
@@ -112,6 +84,7 @@ struct Lattice
         }
         return Ulist;
     }
+    /** Returns the contribution to the action of the wilson loop of a given size of a given site*/
     double site_action(int size, int i1, int i2, int i3, int i4, int direct1)
     {
         double S = 12 * (size == 1);
@@ -131,6 +104,9 @@ struct Lattice
         }
         return S;
     }
+    /** Returns the total action of the system resulting from the wilson loops of a given size
+     * Since there are a lot of repeated independent operations it is sometimes advantageous to use threading to speed up the calculations
+     */
     double Action(int size = 1)
     {
         double S = 0;
@@ -182,6 +158,7 @@ struct Lattice
         // But removed factor in accordance with article
         Avplaq_data.push_back(Action() / Nplaq);
     }
+    /** Returns the expectation value of different sized wilson loops for the system  */
     void Wloop_expct()
     {
         int Wmax = MaxWilsonloop(Lattice_length);
@@ -191,6 +168,7 @@ struct Lattice
             Wloop_data.push_back(Action(WS) / Nplaq);
         }
     }
+    /** New link to replace old one according to the Boltzmann factor  */
     std::vector<double> New_element(double beta, int i1, int i2, int i3, int i4, int d1)
     {
         std::vector<double> New_a_elem(4);
@@ -221,7 +199,9 @@ struct Lattice
         New_a_elem[3] = a_vect[2];
         return (New_a_elem);
     }
-
+    /** Replaces each link in the lattice by touching a heatbath to each link
+     * Since there are a lot of repeated independent operations it is sometimes advantageous to use threading to speed up the calculations
+     */
     void Touchheat(double Beta)
     {
         a_array New_a(Lattice_length);
@@ -281,11 +261,11 @@ struct Lattice
 
         Average_plaquette();
     }
+    /** Repeated application of touching a heatbath to each link variable to achieve equilibrium*/
     void Heatbath(int Iterations, double Beta)
     {
         for (int i = 0; i < Iterations; i++)
         {
-
             Touchheat(Beta);
         }
     }

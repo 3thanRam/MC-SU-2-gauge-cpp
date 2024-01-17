@@ -8,6 +8,7 @@ COLORS=["red","green","blue","purple","orange","black"]
 Lines=["-","--"]
 
 path=os.path.dirname(os.path.abspath(__file__))
+
 def Grsetup(ax,Xlabel,Ylabel,title,b,t):
     ax.set_xlabel(Xlabel)
     ax.set_ylabel(Ylabel)
@@ -99,8 +100,10 @@ def Graph6(ax,N,Imax,Beta_array,Ldata):
     ax.tick_params(which='both',right=True, left=True,top=True , bottom=True)
     ax.yaxis.set_major_formatter(ScalarFormatter())
 
-def DRAW(location):
+def DRAW(whichgraph):
     Nlist=[]
+    location=path.removesuffix('/plotting')+"/graphdata/json_data" + str(whichgraph) + ".json"
+
     with open(location, "r") as f:
         data_loaded = json.load(f)
         Xlabel,Ylabel,title,b,t,numbplots=data_loaded["Xlabel"],data_loaded["Ylabel"],data_loaded["title"],data_loaded["b"],data_loaded["t"],data_loaded["numbplots"]
@@ -144,8 +147,8 @@ def DRAW(location):
     else:
         Grsetup(ax,Xlabel,Ylabel,title,b,1)
     if location[-6]=="4":
-        N=6
-        Imax=30
+        N,Imax=data_loaded["fixed"]
         Graph4stuff(ax,N,Imax,xdata,VALS)
     plt.tight_layout()
+    plt.savefig(path.removesuffix('/plotting')+"/graphdata/figure"+str(location[-6])+".pdf")
     plt.show()
