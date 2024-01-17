@@ -32,12 +32,12 @@ int main()
     // gprof -q-b Main gmon.out > analysis.txt
     std::vector<int> Nlist = {6};                             // List of lattice sizes
     std::vector<double> Betalist = {1.2, 1.6, 2.0, 2.4};      // List of inverse tempertures beta
-    std::vector<double> Beta_array = Rangevalues(0.1, 4, 10); // List of inverse tempertures beta
+    std::vector<double> Beta_array = Rangevalues(0.1, 4, 20); // Large vector of inverse tempertures beta
     int Iterations = 30;                                      // Number of iterations before asuming equilibrium
     int N = Nlist[0];                                         // single lattice size
     double Beta = 2.3;                                        // single inverse temperture
     int Multithreadmode = 2;                                  // no multithread(0) /parrallel threads(1) / lattice site parallelisation(2)
-    int graphNumb = 4;                                        // Choose which graph to plot 1,2
+    int graphNumb = 1;                                        // Choose which figure to plot 1,2,3,4 (5 & 6 are plotted with 4)
     assert(graphNumb == 1 || graphNumb == 2 || graphNumb == 3 || graphNumb == 4);
     bool Calc = 1; // Plot already saved data(0) or plot new data (after calcultions) (1)
     auto start = std::chrono::high_resolution_clock::now();

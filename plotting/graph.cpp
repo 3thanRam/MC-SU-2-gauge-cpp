@@ -49,10 +49,10 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
     std::string Beta_str = std::to_string(Beta);
     Beta_str.erase(Beta_str.find_last_not_of('0') + 1, std::string::npos);
     Beta_str.erase(Beta_str.find_last_not_of('.') + 1, std::string::npos);
-    Jdata["title"] = "Average plaquette as a function of\n Number of iterations\n for several lattice sizes & fixed beta=" + Beta_str;
+    Jdata["title"] = "Average plaquette as a function of\n Number of iterations\n for several lattice sizes & fixed $\\beta$=" + Beta_str;
     Jdata["b"] = 0;
     Jdata["t"] = 1;
-    int Nmode = 1;
+    int Nmode = 2;
     int Np = Nmode * Nlist.size();
     Jdata["numbplots"] = Np;
     std::vector<std::string> graphinfo(Np);
@@ -115,7 +115,7 @@ void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
 
     Jdata["Xlabel"] = "Iterations";
     Jdata["Ylabel"] = "Average plaquette";
-    Jdata["title"] = "Average plaquette as a function of\n Number of iterations\n for several beta & fixed lattice sizes " + Nsize_str;
+    Jdata["title"] = "Average plaquette as a function of\n Number of iterations\n for several $\\beta$ & fixed lattice sizes " + Nsize_str;
     Jdata["b"] = 0;
     Jdata["t"] = 1;
     Jdata["numbplots"] = Betalist.size();
@@ -153,7 +153,7 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
     std::string Beta_str = std::to_string(Beta);
     Beta_str.erase(Beta_str.find_last_not_of('0') + 1, std::string::npos);
     Beta_str.erase(Beta_str.find_last_not_of('.') + 1, std::string::npos);
-    Jdata["title"] = "Wilson loop as a function of\n lattice size\n fixed beta=" + Beta_str;
+    Jdata["title"] = "Wilson loop as a function of\n lattice size\n fixed $\\beta$=" + Beta_str;
     Jdata["b"] = 0;
     Jdata["t"] = 1;
 
@@ -235,9 +235,9 @@ void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
 
     json Jdata;
 
-    Jdata["Xlabel"] = "Beta";
+    Jdata["Xlabel"] = "$\\beta$";
     Jdata["Ylabel"] = "WILSON LOOP";
-    Jdata["title"] = "Wilson loop as a function of beta";
+    Jdata["title"] = "Wilson loop as a function of $\\beta$";
     Jdata["b"] = 0;
     Jdata["t"] = 1;
 
