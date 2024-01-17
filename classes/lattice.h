@@ -1,4 +1,5 @@
 #include "../classes/a_class.h"
+#include <functional>
 
 #ifndef LATTICE
 #define LATTICE
@@ -19,6 +20,115 @@ struct Lattice
     {
         a.init(ini_cond);
     }
+
+    template <typename Callable>
+    double actionfullcounter(int size, Callable &&fct)
+    {
+        double S0 = 0;
+        counter<size_t, 5> my_counter({0, 0, 0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length, Lattice_length, 4});
+        while (my_counter)
+        {
+            S0 += fct(size, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
+            ++my_counter;
+        }
+        return S0;
+    }
+
+    template <typename Callable>
+    a_array heatfullcounter(double Beta, Callable &&fct)
+    {
+        a_array New_a(Lattice_length);
+        std::vector<double> elem;
+        elem.reserve(4);
+        int linknumb;
+        counter<size_t, 5> my_counter({0, 0, 0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length, Lattice_length, 4});
+        while (my_counter)
+        {
+            elem = fct(Beta, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
+            linknumb = a.getIndex(my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
+            New_a.Setlink(linknumb, elem);
+            ++my_counter;
+        }
+        return New_a;
+    }
+
+    template <typename Callable>
+    a_array heatthread(double Beta, Callable &&fct)
+    {
+        auto mp_touchheat = [this, Beta](int ind4, int param3)
+        {
+            std::vector<std::pair<int, std::vector<double>>>
+                mpdata;
+            mpdata.reserve(pow(Lattice_length, 4));
+            std::vector<double> elem;
+            elem.reserve(4);
+            int linknumb;
+            counter<size_t, 3> my_counter({0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length});
+            while (my_counter)
+            {
+                for (int ind3 = Lattice_length * param3 / 2; ind3 < Lattice_length * (param3 + 1) / 2; ind3++)
+                {
+                    elem = New_element(Beta, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), ind3, ind4);
+                    linknumb = my_counter._<0>() * 4 * pow(Lattice_length, 3) + my_counter._<1>() * 4 * pow(Lattice_length, 2) + my_counter._<2>() * 4 * Lattice_length + ind3 * 4 + ind4;
+                    mpdata.emplace_back(std::make_pair(linknumb, elem));
+                }
+                ++my_counter;
+            }
+            return mpdata;
+        };
+        a_array New_a(Lattice_length);
+        std::vector<std::future<std::vector<std::pair<int, std::vector<double>>>>> futures;
+        for (int c = 0; c < 4; c++)
+        {
+            for (int c2 = 0; c2 < 2; c2++)
+            {
+                futures.push_back(std::async(mp_touchheat, c, c2));
+            }
+        }
+        for (auto &f : futures)
+        {
+            for (auto &elem : f.get())
+            {
+                New_a.Setlink(std::get<0>(elem), std::get<1>(elem));
+            }
+        }
+        return New_a;
+    }
+
+    template <typename Callable>
+    double futuresum(int size, Callable &&fct)
+    {
+        double S0 = 0;
+        auto mp_action = [this, fct, size](int ind4, int param3)
+        {
+            double Sm = 0;
+            std::vector<double> elem;
+            counter<size_t, 3> my_counter({0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length});
+            while (my_counter)
+            {
+                for (int ind3 = Lattice_length * param3 / 2; ind3 < Lattice_length * (param3 + 1) / 2; ind3++)
+                {
+                    Sm += fct(size, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), ind3, ind4);
+                }
+                ++my_counter;
+            }
+            return Sm;
+        };
+        std::vector<std::future<double>> futures;
+        for (int c = 0; c < 4; c++)
+        {
+            for (int c2 = 0; c2 < 2; c2++)
+            {
+                futures.push_back(std::async(mp_action, c, c2));
+            }
+        }
+        for (auto &f : futures)
+        {
+            S0 += f.get();
+        }
+        return S0;
+    }
+
     /** Returns the product of links to (ind1,ind2,ind3,ind4) (itself excluded) forming a plaquette
      * in plane (d1,d2) with corresponding directions  (+1,signd2)
      */
@@ -104,52 +214,25 @@ struct Lattice
         }
         return S;
     }
+
     /** Returns the total action of the system resulting from the wilson loops of a given size
      * Since there are a lot of repeated independent operations it is sometimes advantageous to use threading to speed up the calculations
      */
     double Action(int size = 1)
     {
-        double S = 0;
+        double S;
 
-        auto mp_action = [this, size](int ind4, int param3)
+        if (Multithreadmode != 2)
         {
-            double Sm = 0;
-            std::vector<double> elem;
-            counter<size_t, 3> my_counter({0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length});
-            while (my_counter)
-            {
-                for (int ind3 = Lattice_length * param3 / 2; ind3 < Lattice_length * (param3 + 1) / 2; ind3++)
-                {
-                    Sm += site_action(size, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), ind3, ind4);
-                }
-                ++my_counter;
-            }
-            return Sm;
-        };
-        if (Multithreadmode == 2)
-        {
-            std::vector<std::future<double>> futures;
-            for (int c = 0; c < 4; c++)
-            {
-                for (int c2 = 0; c2 < 2; c2++)
-                {
-                    futures.push_back(std::async(mp_action, c, c2));
-                }
-            }
-            for (auto &f : futures)
-            {
-                S += f.get();
-            }
+            S = actionfullcounter(size, [this](int size, int i1, int i2, int i3, int i4, int direct1)
+                                  { return site_action(size, i1, i2, i3, i4, direct1); });
         }
         else
         {
-            counter<size_t, 5> my_counter({0, 0, 0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length, Lattice_length, 4});
-            while (my_counter)
-            {
-                S += site_action(size, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
-                ++my_counter;
-            }
+            S = futuresum(size, [this](int size, int i1, int i2, int i3, int i4, int direct1)
+                          { return site_action(size, i1, i2, i3, i4, direct1); });
         }
+
         return S;
     }
     void Average_plaquette()
@@ -204,60 +287,17 @@ struct Lattice
      */
     void Touchheat(double Beta)
     {
-        a_array New_a(Lattice_length);
-        auto mp_touchheat = [this, Beta](int ind4, int param3)
-        {
-            std::vector<std::pair<int, std::vector<double>>> mpdata;
-            mpdata.reserve(pow(Lattice_length, 4));
-            std::vector<double> elem;
-            elem.reserve(4);
-            int linknumb;
-            counter<size_t, 3> my_counter({0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length});
-            while (my_counter)
-            {
-                for (int ind3 = Lattice_length * param3 / 2; ind3 < Lattice_length * (param3 + 1) / 2; ind3++)
-                {
-                    elem = New_element(Beta, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), ind3, ind4);
-                    linknumb = my_counter._<0>() * 4 * pow(Lattice_length, 3) + my_counter._<1>() * 4 * pow(Lattice_length, 2) + my_counter._<2>() * 4 * Lattice_length + ind3 * 4 + ind4;
-                    mpdata.emplace_back(std::make_pair(linknumb, elem));
-                }
-                ++my_counter;
-            }
-            return mpdata;
-        };
+
         if (Multithreadmode == 2)
         {
-            std::vector<std::future<std::vector<std::pair<int, std::vector<double>>>>> futures;
-            for (int c = 0; c < 4; c++)
-            {
-                for (int c2 = 0; c2 < 2; c2++)
-                {
-                    futures.push_back(std::async(mp_touchheat, c, c2));
-                }
-            }
-            for (auto &f : futures)
-            {
-                for (auto &elem : f.get())
-                {
-                    New_a.Setlink(std::get<0>(elem), std::get<1>(elem));
-                }
-            }
+            a = heatthread(Beta, [this](double Beta, int i1, int i2, int i3, int i4, int direct1)
+                           { return New_element(Beta, i1, i2, i3, i4, direct1); });
         }
         else
         {
-            std::vector<double> elem;
-            elem.reserve(4);
-            int linknumb;
-            counter<size_t, 5> my_counter({0, 0, 0, 0, 0}, {Lattice_length, Lattice_length, Lattice_length, Lattice_length, 4});
-            while (my_counter)
-            {
-                elem = New_element(Beta, my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
-                linknumb = a.getIndex(my_counter._<0>(), my_counter._<1>(), my_counter._<2>(), my_counter._<3>(), my_counter._<4>());
-                New_a.Setlink(linknumb, elem);
-                ++my_counter;
-            }
+            a = heatfullcounter(Beta, [this](double Beta, int i1, int i2, int i3, int i4, int direct1)
+                                { return New_element(Beta, i1, i2, i3, i4, direct1); });
         }
-        a = New_a;
 
         Average_plaquette();
     }
