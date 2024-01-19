@@ -1,5 +1,3 @@
-
-// #include <misc_functions.h>
 #include <vector>
 #include <math.h>
 #include <iostream>
