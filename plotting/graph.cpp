@@ -15,17 +15,6 @@ std::vector<double> Lattice_Plaqcalculation(int N, bool inimode, int Imax, doubl
     return lattice.Avplaq_data;
 }
 
-std::vector<std::vector<double>> Lattice_calculation2(int N, int Imax, std::vector<double> Betalist, int Multithreadmode = 0)
-{
-    std::vector<std::vector<double>> lattdata;
-    for (double beta : Betalist)
-    {
-        Lattice lattice(N, 0, Multithreadmode);
-        lattice.Heatbath(Imax, beta);
-        lattdata.push_back(lattice.Avplaq_data);
-    }
-    return (lattdata);
-}
 std::vector<double> Lattice_Wloopcalculation(int N, bool inimode, int Imax, double Beta, int Multithreadmode = 0)
 {
     Lattice lattice(N, inimode, Multithreadmode);
@@ -119,8 +108,26 @@ void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
     Jdata["b"] = 0;
     Jdata["t"] = 1;
     Jdata["numbplots"] = Betalist.size();
+    std::vector<std::future<std::vector<double>>> futures;
+    if (Multithreadmode == 1)
+    {
+        for (double beta : Betalist)
+        {
+            futures.push_back(std::async(Lattice_Plaqcalculation, Nsize, 0, Iterations, beta, Multithreadmode));
+        }
+        for (auto &f : futures)
+        {
+            Latt_data.push_back(f.get());
+        }
+    }
+    else
+    {
+        for (double beta : Betalist)
+        {
+            Latt_data.push_back(Lattice_Plaqcalculation(Nsize, 0, Iterations, beta, Multithreadmode));
+        }
+    }
 
-    Latt_data = Lattice_calculation2(Nsize, Iterations, Betalist, Multithreadmode);
     std::cout << "Sorting datapoints" << std::endl;
     for (int b = 0; b < Betalist.size(); b++)
     {

@@ -1,7 +1,7 @@
 #include "plotting/graph.h"
 #include <python3.10/Python.h>
 #include <chrono>
-
+// Calls python script which plots the chosen figure using data from the json files in graph_data directory
 void pythonplot(std::string whichgraph)
 {
     const char *pdrawfile = "plotting/graphdraw.py";
@@ -13,6 +13,7 @@ void pythonplot(std::string whichgraph)
     Py_Finalize();
 }
 
+// Returns vector filled with N values between a & b
 std::vector<double> Rangevalues(double a, double b, int N)
 {
     std::vector<double> X;
