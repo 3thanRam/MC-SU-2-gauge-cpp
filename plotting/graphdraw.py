@@ -5,10 +5,15 @@ from scipy.optimize import curve_fit
 import json
 import numpy as np
 COLORS=["red","green","blue","purple","orange","black"]
-Lines=["-","--"]
-
+#Lines=["-","--"]
+Markers=[["x","o"],"x","o","o"]
+Linestyles=[["-","--"],"-","-","None"]
 path=os.path.dirname(os.path.abspath(__file__))
 
+def set_logplot(ax):
+    ax.set_yscale('log')
+    ax.tick_params(which='both',right=True, left=True,top=True , bottom=True)
+    ax.yaxis.set_major_formatter(ScalarFormatter())
 def Grsetup(ax,Xlabel,Ylabel,title,b,t):
     ax.set_xlabel(Xlabel)
     ax.set_ylabel(Ylabel)
@@ -60,27 +65,26 @@ def graph5(ax,N,Beta_array,Ldata):
    
     Grsetup(ax,Xlabel,Ylabel,title,0.01,1)
     ax.set_xlim(0,5)
-    ax.set_yscale('log')
-    ax.tick_params(which='both',right=True, left=True,top=True , bottom=True)
-    ax.yaxis.set_major_formatter(ScalarFormatter())
+    set_logplot(ax)
+
 
 def Graph6(ax,N,Imax,Beta_array,Ldata):
     Xlabel=r"$\beta=\frac{4}{e_{0}^2} $"
     Ylabel=r"$a^2 \kappa $"
     title='Cutof squared times string tension\n as a function of $\\beta$ in \n Strong & weak coupling limits'
 
-    C=[]
+    fitpts=[]
     Betalist=np.linspace(10**-1,2.5,15)
     for b,beta in enumerate(Betalist):
-        beta_ind=(np.abs(Beta_array - beta)).argmin()#np.where(Beta_array==beta)
+        beta_ind=(np.abs(Beta_array - beta)).argmin()
         Wloopb_si=[Ldata[l][beta_ind][1] for l in range(len(Ldata))]
         Xfit=[si+1 for si in range(len(Ldata))]
         Yfit=Wloopb_si
         if beta<=2.1:
             Xfit=[0]+Xfit
             Yfit=[1.0]+Yfit
-        C.append(curve_fit(fitfunc, [si+1 for si in range(len(Ldata))], Wloopb_si)[0][2])
-    ax.scatter(Betalist,C,label='fit data',color='black')
+        fitpts.append(curve_fit(fitfunc, [si+1 for si in range(len(Ldata))], Wloopb_si)[0][2])
+    ax.scatter(Betalist,fitpts,label='fit data',color='black')
 
 
     Beta_spaceS=np.linspace(10**-2,3.5,10**3)
@@ -96,59 +100,54 @@ def Graph6(ax,N,Imax,Beta_array,Ldata):
 
     Grsetup(ax,Xlabel,Ylabel,title,0.01,10)
     ax.set_xlim(0,3.5)
-    ax.set_yscale('log')
-    ax.tick_params(which='both',right=True, left=True,top=True , bottom=True)
-    ax.yaxis.set_major_formatter(ScalarFormatter())
+    set_logplot(ax)
 
-def DRAW(whichgraph):
+
+
+def DRAW(Graphnumb):
     Nlist=[]
-    location=path.removesuffix('/plotting')+"/graphdata/json_data" + str(whichgraph) + ".json"
-
+    location=path.removesuffix('/plotting')+"/graphdata/json_data" + str(Graphnumb) + ".json"
     with open(location, "r") as f:
         data_loaded = json.load(f)
-        Xlabel,Ylabel,title,b,t,numbplots=data_loaded["Xlabel"],data_loaded["Ylabel"],data_loaded["title"],data_loaded["b"],data_loaded["t"],data_loaded["numbplots"]
+        Xlabel,Ylabel,title=data_loaded["Xlabel"],data_loaded["Ylabel"],data_loaded["title"]
+        bottom,top,numbplots=data_loaded["b"],data_loaded["t"],data_loaded["numbplots"]
         Fullplotdata=data_loaded["plots"]
         VALS=[np.array(data) for data in Fullplotdata if data!=[]]
-    if location[-6]=="4":
+    
+    if Graphnumb==4:
         ax=plt.subplot(221)
     else:
-        ax=plt.subplot(121)
+        ax=plt.subplot(111)
     for p in range(numbplots):
-        if Fullplotdata[p]==[] or not VALS[p][:,1].any():#skip empty or all zeros
+        if Fullplotdata[p]==[] or not VALS[p][:,1].any():#skip data that is empty or all zeros
             continue
         xdata,ydata=VALS[p][:,0],VALS[p][:,1]
         graphinfo=data_loaded["graphinfo"][p]
-        if location[-6]=="3":
-            for xval in xdata:
-                if xval not in Nlist:
-                    Nlist.append(xval)
-        if location[-6]=="1":
+        
+        marker,linestyle=Markers[Graphnumb-1],Linestyles[Graphnumb-1]
+        color=COLORS[p]
+        if Graphnumb==1:
             N=int(np.log2(int(graphinfo[4])))
             inimode=int(graphinfo[-1])
-            linestyle=Lines[inimode]
             color=COLORS[N]
-        else:
-            if location[-6]=="4":
-                linestyle="None"
-            else:
-                linestyle=Lines[0]
-            color=COLORS[p]
-        ax.plot(xdata,ydata,color=color,marker='o',linestyle=linestyle,label=graphinfo)
+            linestyle=linestyle[inimode]
+            marker=marker[inimode]
+        elif Graphnumb==3:
+            Nlist+=[xval for xval in xdata if xval not in Nlist]
+        
+        ax.plot(xdata,ydata,color=color,marker=marker,linestyle=linestyle,label=graphinfo)
     
-    if location[-6]=="3":
-        ax.set_yscale('log')
-        if b<=0:
-            b=0.01
-            Grsetup(ax,Xlabel,Ylabel,title,b,1)
+    if Graphnumb==3:
+        if bottom<=0:
+            bottom=0.01
         labels = [str(int(n))+'$^{4}$' for n in Nlist]
-        ax.tick_params(which='both',right=True, left=True,top=True , bottom=True)
+        set_logplot(ax)
         ax.set_xticks(Nlist, labels=labels)
-        ax.yaxis.set_major_formatter(ScalarFormatter())
-    else:
-        Grsetup(ax,Xlabel,Ylabel,title,b,1)
-    if location[-6]=="4":
+
+    Grsetup(ax,Xlabel,Ylabel,title,bottom,top)
+    if Graphnumb==4:
         N,Imax=data_loaded["fixed"]
         Graph4stuff(ax,N,Imax,xdata,VALS)
     plt.tight_layout()
-    plt.savefig(path.removesuffix('/plotting')+"/graphdata/figure"+str(location[-6])+".pdf")
+    plt.savefig(path.removesuffix('/plotting')+"/graphdata/figure"+str(Graphnumb)+".pdf")
     plt.show()

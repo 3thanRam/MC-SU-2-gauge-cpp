@@ -6,17 +6,22 @@
 
 struct Lattice
 {
-    unsigned int Lattice_length; // length of the lattice
-    bool ini_cond;               // initial state of array a: {1,0,0,0}(0) or random(1)
-    int totnumb_orientlinks;     // 4 * pow(Lat_Length_set, 4)
-    int totnumb_elements;        // 4*totnumb_orientlinks
-    int Nplaq;                   // degen(direction1)*degen(direction2)=2*(3*2) -> =12 * totnumb_orientlinks
-    int Multithreadmode;
-    a_array a;
-    std::vector<double> Avplaq_data;
-    std::vector<double> Wloop_data;
+    unsigned int Lattice_length;     // length of the lattice
+    bool ini_cond;                   // initial state of array a: {1,0,0,0}(0) or random(1)
+    int totnumb_orientlinks;         // 4 * pow(Lat_Length_set, 4)
+    int Nplaq;                       // degeneracy(direction1)*degeneracy(direction2)=2*(3*2) -> =12 * totnumb_orientlinks
+    a_array a;                       // Where the links are stored
+    int Multithreadmode;             // If and how the tasks are split using threading and futures
+    std::vector<double> Avplaq_data; // vector of Average plaquette at each iteration
+    std::vector<double> Wloop_data;  // vector of expectation value of different sized wilson loops
     Lattice() : Lattice_length(0){};
-    Lattice(int Lattice_length, bool ini_cond, int Multithreadmode) : Lattice_length(Lattice_length), ini_cond(ini_cond), Multithreadmode(Multithreadmode), a(Lattice_length), totnumb_orientlinks(4 * pow(Lattice_length, 4)), totnumb_elements(4 * totnumb_orientlinks), Nplaq(12 * totnumb_orientlinks)
+    Lattice(int Lattice_length_set, bool ini_cond_set, int Multithreadmode_set)
+        : Lattice_length(Lattice_length_set),
+          ini_cond(ini_cond_set),
+          totnumb_orientlinks(4 * pow(Lattice_length_set, 4)),
+          Nplaq(12 * totnumb_orientlinks),
+          a(Lattice_length_set),
+          Multithreadmode(Multithreadmode_set)
     {
         a.init(ini_cond);
     }
@@ -75,12 +80,12 @@ struct Lattice
     // Add value of site_action at site indices to S
     void UpdateS(double &S, int size, int i0, int i1, int i2, int i3, int i4);
     // Add value site_action hidden inside future to S
-    void MpUpdateS(double &S, std::future<double> &future);
-    // Set link identified with linknumb of arr to contents of elem generated with New_element
+    void UpdateS(double &S, std::future<double> &future);
+    //  Set link identified with linknumb of arr to contents of elem generated with New_element
     void Updatearray(a_array &arr, double beta, int i0, int i1, int i2, int i3, int i4);
     /**Set link (identified with elem[0]) of arr to contents of elem[1]
      * with elem obtained from calling futures (which is itself New_element called with threading) */
-    void MpUpdatearray(a_array &arr, std::future<std::vector<std::pair<int, std::vector<double>>>> &futures);
+    void Updatearray(a_array &arr, std::future<std::vector<std::pair<int, std::vector<double>>>> &futures);
     /** Returns the product of links to (ind1,ind2,ind3,ind4) (itself excluded) forming a plaquette
      * in plane (d1,d2) with corresponding directions  (+1,signd2)
      */

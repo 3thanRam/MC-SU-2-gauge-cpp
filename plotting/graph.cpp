@@ -77,7 +77,7 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
         for (int n = 0; n < Nlist.size(); n++)
         {
             std::stringstream ginfo;
-            ginfo << "N=4^" << Nlist[n] << " Inimode:" << Ini_mode;
+            ginfo << "N=" << Nlist[n] << "^4 Inimode:" << Ini_mode;
             graphinfo[Ini_mode * Nlist.size() + n] = ginfo.str();
             for (int i = 0; i < Iterations; i++)
             {

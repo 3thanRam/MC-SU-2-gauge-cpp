@@ -4,8 +4,8 @@ void Lattice::UpdateS(double &S, int size, int i0, int i1, int i2, int i3, int i
 {
     S += site_action(size, i0, i1, i2, i3, i4);
 }
-// Add value site_action hidden inside future to S
-void Lattice::MpUpdateS(double &S, std::future<double> &future)
+// Add value of site_action hidden inside future to S
+void Lattice::UpdateS(double &S, std::future<double> &future)
 {
     S += future.get();
 }
@@ -18,7 +18,7 @@ void Lattice::Updatearray(a_array &arr, double beta, int i0, int i1, int i2, int
 }
 /**Set link (identified with elem[0]) of arr to contents of elem[1]
  * with elem obtained from calling futures (which is itself New_element called with threading) */
-void Lattice::MpUpdatearray(a_array &arr, std::future<std::vector<std::pair<int, std::vector<double>>>> &futures)
+void Lattice::Updatearray(a_array &arr, std::future<std::vector<std::pair<int, std::vector<double>>>> &futures)
 {
     for (auto &elem : futures.get())
     {
@@ -39,8 +39,8 @@ std::vector<double> Lattice::Neighprod(int ind1, int ind2, int ind3, int ind4, i
     return (Uprod);
 }
 /** Returns ordered elements of links forming wilson loop
- *  of size Wsize starting at (ind1,ind2,ind3,ind4)
- * in plane (d1,d2) with corresponding directions  signd1,signd2
+ *  -Of size Wsize starting at (ind1,ind2,ind3,ind4)
+ *  -In plane (d1,d2) with corresponding directions  signd1,signd2
  */
 std::vector<double> Lattice::Neighbours(int ind1, int ind2, int ind3, int ind4, int d1, int d2, int signd1, int signd2, int Wsize)
 {
@@ -124,11 +124,10 @@ double Lattice::Action(int size)
                     { return UpdateS(S0, size, i1, i2, i3, i4, direct1); });
     }
     else
-    { // mpcounter
+    {
         std::vector<std::future<double>> futures;
-        // Callable &&update_target, Callable &&init_fct, Callable &&mpupdate_fct
-        auto update_target = [this](double &S, std::future<double> &future)
-        { MpUpdateS(S, future); };
+        auto update_target = [this](double &S0, std::future<double> &future)
+        { UpdateS(S0, future); };
         auto init_fct = [this]()
         {
             double S0 = 0;
@@ -137,26 +136,23 @@ double Lattice::Action(int size)
         auto mpupdate_fct = [this](double &S0, int size, int i1, int i2, int i3, int i4, int direct1)
         { return UpdateS(S0, size, i1, i2, i3, i4, direct1); };
         mpcounter(S, size, futures, update_target, init_fct, mpupdate_fct);
-        // S = futuresum(size, [this](int size, int i1, int i2, int i3, int i4, int direct1)
-        //               { return site_action(size, i1, i2, i3, i4, direct1); });
     }
 
     return S;
 }
 void Lattice::Average_plaquette()
 {
-    // Technically 4*Average plaquette since each plaquette is inserted 4 times once for each link
-    // But removed factor in accordance with article
-    Avplaq_data.push_back(Action() / Nplaq);
+    // Technically 4*Average plaquette since each plaquette is inserted 4 times once for each link it contains
+    Avplaq_data.push_back(Action() / (Nplaq));
 }
 /** Returns the expectation value of different sized wilson loops for the system  */
 void Lattice::Wloop_expct()
 {
     int Wmax = MaxWilsonloop(Lattice_length);
-    Wloop_data.push_back(1 - Action() / Nplaq);
+    Wloop_data.push_back(1 - Action() / (Nplaq));
     for (int WS = 2; WS < Wmax; WS++)
     {
-        Wloop_data.push_back(Action(WS) / Nplaq);
+        Wloop_data.push_back(Action(WS) / (Nplaq));
     }
 }
 /** New link to replace old one according to the Boltzmann factor  */
@@ -200,7 +196,7 @@ void Lattice::Touchheat(double Beta)
     {
         std::vector<std::future<std::vector<std::pair<int, std::vector<double>>>>> futures;
         auto update_target = [this](a_array &arr, std::future<std::vector<std::pair<int, std::vector<double>>>> &future)
-        { return MpUpdatearray(arr, future); };
+        { return Updatearray(arr, future); };
         auto init_fct = [this]()
         {
             std::vector<std::pair<int, std::vector<double>>> mpdata;

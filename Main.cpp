@@ -28,38 +28,52 @@ std::vector<double> Rangevalues(double a, double b, int N)
 
 int main()
 {
-    // gprof -q-b Main gmon.out > analysis.txt
-    std::vector<int> Nlist = {6};                             // List of lattice sizes
-    std::vector<double> Betalist = {1.2, 1.6, 2.0, 2.4};      // List of inverse tempertures beta
-    std::vector<double> Beta_array = Rangevalues(0.1, 4, 20); // Large vector of inverse tempertures beta
-    int Iterations = 30;                                      // Number of iterations before asuming equilibrium
-    int N = Nlist[0];                                         // single lattice size
-    double Beta = 2.3;                                        // single inverse temperture
-    int Multithreadmode = 2;                                  // no multithread(0) /parrallel threads(1) / lattice site parallelisation(2)
-    int graphNumb = 1;                                        // Choose which figure to plot 1,2,3,4 (5 & 6 are plotted with 4)
-    assert(graphNumb == 1 || graphNumb == 2 || graphNumb == 3 || graphNumb == 4);
-    bool Calc = 1; // Plot already saved data(0) or plot new data (after calcultions) (1)
-    auto start = std::chrono::high_resolution_clock::now();
-    if (graphNumb == 1 & Calc)
+    /**0-> No multithread
+     * 1-> Perform calculations on different lattices in parrallel
+     * 2-> Inside a lattice perform independent calculations in parrallel eg: action contribution from each site
+     */
+    int Multithreadmode = 2;
+
+    // Choose plot 1,2,3,4 (5 & 6 are plotted with 4)
+    char graphNumb;
+    std::cout << "Choose which figure to plot 1,2,3,4: ";
+    std::cin >> graphNumb;
+
+    //"Plot saved(0)/ new data(1) : "
+    bool Calc;
+    std::cout << "Plot already saved data(0) or calculate new data & plot (1): ";
+    std::cin >> Calc;
+
+    int Iterations = 30;          // Number of iterations before asuming equilibrium
+    std::vector<int> Nlist = {6}; // List of lattice sizes
+    double Beta = 2.3;            // single inverse temperture
+    std::vector<double> Betavect; // List of inverse tempertures beta
+
+    if (Calc)
     {
-        Graph1(Nlist, Iterations, Beta, Multithreadmode);
+        auto start = std::chrono::high_resolution_clock::now();
+        switch (graphNumb)
+        {
+        case '1':
+            Graph1(Nlist, Iterations, Beta, Multithreadmode);
+            break;
+        case '2':
+            Betavect = {1.2, 1.6, 2.0, 2.4}; // Manual list of inverse tempertures beta
+            Graph2(Nlist[0], Iterations, Betavect, Multithreadmode);
+            break;
+        case '3':
+            Graph3(Nlist, Iterations, Beta, Multithreadmode);
+            break;
+        case '4':
+            Betavect = Rangevalues(0.1, 4, 20); // Large vector of inverse tempertures beta between 0.1 and 4
+            Graph4(Nlist[0], Iterations, Betavect, Multithreadmode);
+            break;
+        }
+        auto finish = std::chrono::high_resolution_clock::now();
+        std::cout << "\nTotal Elapsed time: " << (std::chrono::duration<double>(finish - start)).count() << " s\n";
     }
-    else if (graphNumb == 2 & Calc)
-    {
-        Graph2(N, Iterations, Betalist, Multithreadmode);
-    }
-    else if (graphNumb == 3 & Calc)
-    {
-        Graph3(Nlist, Iterations, Beta, Multithreadmode);
-    }
-    else if (graphNumb == 4 & Calc)
-    {
-        Graph4(N, Iterations, Beta_array, Multithreadmode);
-    }
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-    std::cout << "\nTotal Elapsed time: " << elapsed.count() << " s\n";
-    pythonplot(std::to_string(graphNumb));
+    std::string graphnumbstr(1, graphNumb);
+    pythonplot(graphnumbstr);
 
     return 0;
 }

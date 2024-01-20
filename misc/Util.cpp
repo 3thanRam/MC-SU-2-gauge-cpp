@@ -42,23 +42,32 @@ std::vector<double> get_ini_rand_elem()
 std::vector<double> Rotate_3Dvector_random(std::vector<double> &vect)
 {
     std::vector<double> rotvect;
-    double alpha, beta, gamma, a, b, c, d, e, f, g, h, i;
+    double alpha, cos_alpha, sin_alpha, beta, cos_beta, sin_beta, gamma, cos_gamma, sin_gamma, a, b, c, d, e, f, g, h, i;
 
     alpha = Random() * 2 * 3.14159;
     beta = Random() * 2 * 3.14159;
     gamma = Random() * 2 * 3.14159;
 
-    a = cos(alpha) * cos(beta);
-    b = cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma);
-    c = cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma);
+    cos_alpha = cos(alpha);
+    sin_alpha = sin(alpha);
 
-    d = sin(alpha) * cos(beta);
-    e = sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma);
-    f = sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma);
+    cos_beta = cos(beta);
+    sin_beta = sin(beta);
 
-    g = -sin(beta);
-    h = cos(beta) * sin(gamma);
-    i = cos(beta) * cos(gamma);
+    cos_gamma = cos(gamma);
+    sin_gamma = sin(gamma);
+
+    a = cos_alpha * cos_beta;
+    b = cos_alpha * sin_beta * sin_gamma - sin_alpha * cos_gamma;
+    c = cos_alpha * sin_beta * cos_gamma + sin_alpha * sin_gamma;
+
+    d = sin_alpha * cos_beta;
+    e = sin_alpha * sin_beta * sin_gamma + cos_alpha * cos_gamma;
+    f = sin_alpha * sin_beta * cos_gamma - cos_alpha * sin_gamma;
+
+    g = -sin_beta;
+    h = cos_beta * sin_gamma;
+    i = cos_beta * cos_gamma;
 
     rotvect.push_back(a * vect[0] + b * vect[1] + c * vect[2]);
     rotvect.push_back(d * vect[0] + e * vect[1] + f * vect[2]);
