@@ -13,7 +13,9 @@
 std::vector<double> get_ini_rand_elem();
 // Returns random double in uniform range [0,1[
 double Random();
-// returns either 0 or 1 with probailities: param,1-param
+// Returns n random doubles in uniform range [0,1[
+std::vector<double> Random(int n);
+// returns either 0 or 1 with probabilities: param,1-param
 int Choice(double param);
 // needeed non standard modulo operation
 int Mod(int a, int b);
@@ -28,7 +30,7 @@ std::vector<double> Paulimult(const std::vector<double> &Ma, const std::vector<d
 // Returns determiant of given matrix in Pauli basis
 double PauliDet(std::vector<double> &Ulink);
 // Rotates a given 3D vector in a random direction
-std::vector<double> Rotate_3Dvector_random(std::vector<double> &vect);
+void Rotate_3Dvector_random(std::vector<double> &vect);
 /** Returns the Trace of the product of the given links
  * Input is list of all link elements
  * To be multiplied by grouping each link (which is of size 4)

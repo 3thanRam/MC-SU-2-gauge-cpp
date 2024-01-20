@@ -12,6 +12,7 @@ std::vector<double> Lattice_Plaqcalculation(int N, bool inimode, int Imax, doubl
 {
     Lattice lattice(N, inimode, Multithreadmode);
     lattice.Heatbath(Imax, Beta);
+    printf("Finished Plaquette Calculation (N=%d, Inimode=%d,beta=%g)\n", N, inimode, Beta);
     return lattice.Avplaq_data;
 }
 
@@ -20,16 +21,40 @@ std::vector<double> Lattice_Wloopcalculation(int N, bool inimode, int Imax, doub
     Lattice lattice(N, inimode, Multithreadmode);
     lattice.Heatbath(Imax, Beta);
     lattice.Wloop_expct();
+    printf("Finished Wilson loop Calculation (N=%d,beta=%g)\n", N, Beta);
     return lattice.Wloop_data;
 }
 
+/**
+ * Unpacks the results from a vector of futures into the provided Latt_data vector.
+ */
+void Unpackfutures(std::vector<std::vector<double>> &Latt_data, std::vector<std::future<std::vector<double>>> &futures, bool iter = 0)
+{
+    for (auto &f : futures)
+    {
+        if (!iter)
+        {
+            Latt_data.emplace_back(f.get());
+        }
+        else
+        {
+            std::vector<double> sublatticedata = f.get();
+            for (int i = 0; i < sublatticedata.size(); i++)
+            {
+                Latt_data[i].emplace_back(sublatticedata[i]);
+            }
+        }
+    }
+}
+
+/**
+ * Generates and saves data for a graph representing average plaquette values.
+ */
 void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithreadmode)
 {
 
     std::vector<std::vector<double>> Latt_data;
     std::vector<std::vector<std::pair<int, double>>> datapts(2 * Nlist.size());
-
-    std::cout << "startloop" << std::endl;
 
     json Jdata;
 
@@ -53,13 +78,10 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
         {
             for (int n = 0; n < Nlist.size(); n++)
             {
-                futures.push_back(std::async(Lattice_Plaqcalculation, Nlist[n], Ini_mode, Iterations, Beta, Multithreadmode));
+                futures.emplace_back(std::async(Lattice_Plaqcalculation, Nlist[n], Ini_mode, Iterations, Beta, Multithreadmode));
             }
         }
-        for (auto &f : futures)
-        {
-            Latt_data.push_back(f.get());
-        }
+        Unpackfutures(Latt_data, futures);
     }
     else
     {
@@ -67,11 +89,11 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
         {
             for (int n = 0; n < Nlist.size(); n++)
             {
-                Latt_data.push_back(Lattice_Plaqcalculation(Nlist[n], Ini_mode, Iterations, Beta, Multithreadmode));
+                Latt_data.emplace_back(Lattice_Plaqcalculation(Nlist[n], Ini_mode, Iterations, Beta, Multithreadmode));
             }
         }
     }
-
+    std::cout << "Sorting datapoints" << std::endl;
     for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
     {
         for (int n = 0; n < Nlist.size(); n++)
@@ -81,7 +103,7 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
             graphinfo[Ini_mode * Nlist.size() + n] = ginfo.str();
             for (int i = 0; i < Iterations; i++)
             {
-                datapts[Ini_mode * Nlist.size() + n].push_back(std::make_pair(i, Latt_data[Ini_mode * Nlist.size() + n][i]));
+                datapts[Ini_mode * Nlist.size() + n].emplace_back(i, Latt_data[Ini_mode * Nlist.size() + n][i]);
             }
         }
     }
@@ -90,6 +112,9 @@ void Graph1(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
     Saveas(Jdata, "json_data1");
 }
 
+/**
+ * Generates a graph and saves it as a JSON file.
+ */
 void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multithreadmode)
 {
     json Jdata;
@@ -113,18 +138,15 @@ void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
     {
         for (double beta : Betalist)
         {
-            futures.push_back(std::async(Lattice_Plaqcalculation, Nsize, 0, Iterations, beta, Multithreadmode));
+            futures.emplace_back(std::async(Lattice_Plaqcalculation, Nsize, 0, Iterations, beta, Multithreadmode));
         }
-        for (auto &f : futures)
-        {
-            Latt_data.push_back(f.get());
-        }
+        Unpackfutures(Latt_data, futures);
     }
     else
     {
         for (double beta : Betalist)
         {
-            Latt_data.push_back(Lattice_Plaqcalculation(Nsize, 0, Iterations, beta, Multithreadmode));
+            Latt_data.emplace_back(Lattice_Plaqcalculation(Nsize, 0, Iterations, beta, Multithreadmode));
         }
     }
 
@@ -136,7 +158,7 @@ void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
         graphinfo[b] = ginfo.str();
         for (int i = 0; i < Iterations; i++)
         {
-            datapts[b].push_back(std::make_pair(i, Latt_data[b][i]));
+            datapts[b].emplace_back(i, Latt_data[b][i]);
         }
     }
     Jdata["graphinfo"] = graphinfo;
@@ -144,14 +166,15 @@ void Graph2(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
     Saveas(Jdata, "json_data2");
 }
 
+/**
+ * Calculate and save graph data for Wilson loop as a function of lattice size.
+ */
 void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithreadmode)
 {
     int Nloops = 6;
 
     std::vector<std::vector<double>> Latt_data(Nloops);
     std::vector<std::vector<std::pair<int, double>>> datapts(Nloops);
-
-    std::cout << "startloop" << std::endl;
 
     json Jdata;
 
@@ -168,20 +191,14 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
     std::vector<std::string> graphinfo(Nloops);
     std::vector<std::future<std::vector<double>>> futures;
 
+    std::cout << "Sorting datapoints" << std::endl;
     if (Multithreadmode == 1)
     {
         for (int n = 0; n < Nlist.size(); n++)
         {
-            futures.push_back(std::async(Lattice_Wloopcalculation, Nlist[n], 0, Iterations, Beta, Multithreadmode));
+            futures.emplace_back(std::async(Lattice_Wloopcalculation, Nlist[n], 0, Iterations, Beta, Multithreadmode));
         }
-        for (auto &f : futures)
-        {
-            std::vector<double> LatticeL = f.get();
-            for (int l = 0; l < LatticeL.size(); l++)
-            {
-                Latt_data[l].push_back(LatticeL[l]);
-            }
-        }
+        Unpackfutures(Latt_data, futures, 1);
     }
     else
     {
@@ -190,29 +207,11 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
             std::vector<double> LatticeL = Lattice_Wloopcalculation(Nlist[n], 0, Iterations, Beta, Multithreadmode);
             for (int l = 0; l < Nloops; l++)
             {
-                Latt_data[l].push_back(LatticeL[l]);
+                Latt_data[l].emplace_back(LatticeL[l]);
             }
         }
     }
-    auto Wmax = [](int wloopsize, int latsize)
-    {
-        if (latsize == 2)
-        {
-            return wloopsize <= 2;
-        }
-        else if (latsize == 4)
-        {
-            return wloopsize <= 3;
-        }
-        else if (latsize == 6)
-        {
-            return wloopsize <= 5;
-        }
-        else
-        {
-            return true;
-        }
-    };
+
     for (int l = 0; l < Nloops; l++)
     {
         std::stringstream ginfo;
@@ -220,9 +219,9 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
         graphinfo[l] = ginfo.str();
         for (int n = 0; n < Nlist.size(); n++)
         {
-            if (Wmax(l + 1, Nlist[n]))
+            if (l + 1 < MaxWilsonloop(Nlist[n]))
             {
-                datapts[l].push_back(std::make_pair(Nlist[n], Latt_data[l][n]));
+                datapts[l].emplace_back(Nlist[n], Latt_data[l][n]);
             }
         }
     }
@@ -231,14 +230,15 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta, int Multithread
     Saveas(Jdata, "json_data3");
 }
 
+/**
+ * Generates data for a Wilson loop as a function of beta and saves it in a JSON file.
+ */
 void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multithreadmode)
 {
     int Nloops = 5;
 
     std::vector<std::vector<double>> Latt_data(Nloops);
     std::vector<std::vector<std::pair<double, double>>> datapts(Nloops);
-
-    std::cout << "startloop" << std::endl;
 
     json Jdata;
 
@@ -257,16 +257,9 @@ void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
     {
         for (auto beta : Betalist)
         {
-            futures.push_back(std::async(Lattice_Wloopcalculation, Nsize, 0, Iterations, beta, Multithreadmode));
+            futures.emplace_back(std::async(Lattice_Wloopcalculation, Nsize, 0, Iterations, beta, Multithreadmode));
         }
-        for (auto &f : futures)
-        {
-            std::vector<double> Latticeb = f.get();
-            for (int l = 0; l < Latticeb.size(); l++)
-            {
-                Latt_data[l].push_back(Latticeb[l]);
-            }
-        }
+        Unpackfutures(Latt_data, futures, 1);
     }
     else
     {
@@ -275,10 +268,11 @@ void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
             std::vector<double> Latticeb = Lattice_Wloopcalculation(Nsize, 0, Iterations, beta, Multithreadmode);
             for (int l = 0; l < Latticeb.size(); l++)
             {
-                Latt_data[l].push_back(Latticeb[l]);
+                Latt_data[l].emplace_back(Latticeb[l]);
             }
         }
     }
+    std::cout << "Sorting datapoints" << std::endl;
     for (int l = 0; l < Nloops; l++)
     {
         std::stringstream ginfo;
@@ -286,7 +280,7 @@ void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
         graphinfo[l] = ginfo.str();
         for (int b = 0; b < Betalist.size(); b++)
         {
-            datapts[l].push_back(std::make_pair(Betalist[b], Latt_data[l][b]));
+            datapts[l].emplace_back(Betalist[b], Latt_data[l][b]);
         }
     }
     Jdata["graphinfo"] = graphinfo;

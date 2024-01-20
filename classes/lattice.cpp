@@ -13,8 +13,9 @@ void Lattice::UpdateS(double &S, std::future<double> &future)
 void Lattice::Updatearray(a_array &arr, double beta, int i0, int i1, int i2, int i3, int i4)
 {
     std::vector<double> elem = New_element(beta, i0, i1, i2, i3, i4);
-    int linknumb = a.getIndex(i0, i1, i2, i3, i4);
-    arr.Setlink(linknumb, elem);
+    int linknumb = arr.getIndex(i0, i1, i2, i3, i4);
+    assert(arr.data.size() - (linknumb + 3) >= 0);
+    std::copy(elem.begin(), elem.end(), arr.data.begin() + linknumb);
 }
 /**Set link (identified with elem[0]) of arr to contents of elem[1]
  * with elem obtained from calling futures (which is itself New_element called with threading) */
@@ -22,7 +23,10 @@ void Lattice::Updatearray(a_array &arr, std::future<std::vector<std::pair<int, s
 {
     for (auto &elem : futures.get())
     {
-        arr.Setlink(std::get<0>(elem), std::get<1>(elem));
+        int linknumb = std::get<0>(elem);
+        std::vector<double> Newelem = std::get<1>(elem);
+        assert(arr.data.size() - (linknumb + 3) >= 0);
+        std::copy(Newelem.begin(), Newelem.end(), arr.data.begin() + linknumb);
     }
 }
 /** Returns the product of links to (ind1,ind2,ind3,ind4) (itself excluded) forming a plaquette
@@ -82,6 +86,10 @@ std::vector<double> Lattice::Neighbours(int ind1, int ind2, int ind3, int ind4, 
                 a_elem[3] *= -1;
             }
             Uind = 4 * (Unumb * Wsize + ws);
+            /**At the end Ulist will look like:
+             * U0*Wsize,U1*Wsize,U2*Wsize,U3*Wsize
+             * But with unpacked elements (each link has 4 elements)
+             */
             Ulist[Uind] = a_elem[0];
             Ulist[Uind + 1] = a_elem[1];
             Ulist[Uind + 2] = a_elem[2];
@@ -117,7 +125,6 @@ double Lattice::site_action(int size, int i1, int i2, int i3, int i4, int direct
 double Lattice::Action(int size)
 {
     double S = 0;
-
     if (Multithreadmode != 2)
     {
         fullcounter(S, size, [this](double &S0, int size, int i1, int i2, int i3, int i4, int direct1)
@@ -137,7 +144,6 @@ double Lattice::Action(int size)
         { return UpdateS(S0, size, i1, i2, i3, i4, direct1); };
         mpcounter(S, size, futures, update_target, init_fct, mpupdate_fct);
     }
-
     return S;
 }
 void Lattice::Average_plaquette()
@@ -178,12 +184,12 @@ std::vector<double> Lattice::New_element(double beta, int i1, int i2, int i3, in
     }
     double k = sqrt(PauliDet(USum));
     New_a_elem[0] = get_ao(beta, k);
-    double avv = sqrt(1 - pow(New_a_elem[0], 2)) / sqrt(3);
-    std::vector<double> av = {avv, avv, avv};
-    std::vector<double> a_vect = Rotate_3Dvector_random(av);
-    New_a_elem[1] = a_vect[0];
-    New_a_elem[2] = a_vect[1];
-    New_a_elem[3] = a_vect[2];
+    double vect3length = sqrt(1 - New_a_elem[0] * New_a_elem[0]);
+    std::vector<double> a_3vect = {vect3length, 0, 0};
+    Rotate_3Dvector_random(a_3vect);
+    New_a_elem[1] = a_3vect[0];
+    New_a_elem[2] = a_3vect[1];
+    New_a_elem[3] = a_3vect[2];
     return (New_a_elem);
 }
 /** Replaces each link in the lattice by touching a heatbath to each link
@@ -192,6 +198,7 @@ std::vector<double> Lattice::New_element(double beta, int i1, int i2, int i3, in
 void Lattice::Touchheat(double Beta)
 {
     a_array New_a(Lattice_length);
+    // New_a.init(0);
     if (Multithreadmode == 2)
     {
         std::vector<std::future<std::vector<std::pair<int, std::vector<double>>>>> futures;
@@ -200,13 +207,14 @@ void Lattice::Touchheat(double Beta)
         auto init_fct = [this]()
         {
             std::vector<std::pair<int, std::vector<double>>> mpdata;
-            mpdata.reserve(pow(Lattice_length, 4));
+            mpdata.reserve(16 * pow(Lattice_length, 4));
             return mpdata;
         };
         auto mpupdate_fct = [this](std::vector<std::pair<int, std::vector<double>>> &mpdata, double Beta, int ind0, int ind1, int ind2, int ind3, int ind4)
         {
             std::vector<double> elem = New_element(Beta, ind0, ind1, ind2, ind3, ind4);
-            int linknumb = ind0 * 4 * pow(Lattice_length, 3) + ind1 * 4 * pow(Lattice_length, 2) + ind2 * 4 * Lattice_length + ind3 * 4 + ind4;
+            int linknumb = (ind0 * 4 * pow(Lattice_length, 3) + ind1 * 4 * Lattice_length * Lattice_length + ind2 * 4 * Lattice_length + ind3 * 4 + ind4) * 4;
+            assert(3 + linknumb < 4 * totnumb_orientlinks);
             mpdata.emplace_back(std::make_pair(linknumb, elem));
         };
         mpcounter(New_a, Beta, futures, update_target, init_fct, mpupdate_fct);
@@ -226,5 +234,6 @@ void Lattice::Heatbath(int Iterations, double Beta)
     for (int i = 0; i < Iterations; i++)
     {
         Touchheat(Beta);
+        assert(a.data.size() == 4 * totnumb_orientlinks);
     }
 };

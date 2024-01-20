@@ -1,10 +1,12 @@
 #include "a_class.h"
-std::vector<double> &a_array::at(int i1, int i2, int i3, int i4, int i5)
-/**Instead of storing multidimensional vector simply create a 1D vector and translate the "indices" using getIndex*/
+
+std::vector<double> a_array::at(int i1, int i2, int i3, int i4, int i5)
 {
-    int gind = getIndex(i1, i2, i3, i4, i5);
-    return data[gind];
+    int linknumb = getIndex(i1, i2, i3, i4, i5);
+    assert(data.size() - (linknumb + 3) >= 0);
+    return std::vector<double>(data.begin() + linknumb, data.begin() + linknumb + 4);
 }
+
 /**Translate multi-index to single index*/
 int a_array::getIndex(int i1, int i2, int i3, int i4, int i5)
 {
@@ -13,32 +15,24 @@ int a_array::getIndex(int i1, int i2, int i3, int i4, int i5)
     assert(i3 >= 0 && i3 < Lsize);
     assert(i4 >= 0 && i4 < Lsize);
     assert(i5 >= 0 && i5 < 4);
-    return i1 * 4 * pow(Lsize, 3) + i2 * 4 * pow(Lsize, 2) + i3 * 4 * Lsize + i4 * 4 + i5;
-}
-
-/**Set a link element of given index to the contents of the vector elem*/
-void a_array::Setlink(int linknumb, std::vector<double> elem)
-{
-    data[linknumb][0] = elem[0];
-    data[linknumb][1] = elem[1];
-
-    data[linknumb][2] = elem[2];
-    data[linknumb][3] = elem[3];
+    return (i1 * 4 * pow(Lsize, 3) + i2 * 4 * Lsize * Lsize + i3 * 4 * Lsize + i4 * 4 + i5) * 4;
 }
 /**Either set all links to (1,0,0,0) or random element (of determiant 1)*/
 void a_array::init(bool ini_cond = 0)
 {
     std::vector<double> elem(4);
-    for (int linknumb = 0; linknumb < numb4vect; linknumb++)
+    for (int linknumb = 0; linknumb < 4 * numb4vect; linknumb = linknumb + 4)
     {
-        if (ini_cond == 0)
-        {
-            elem = {1, 0, 0, 0};
-        }
-        else
+        // std::vector<double> elem = (ini_cond) ? get_ini_rand_elem() : std::vector<double>{1, 0, 0, 0};
+        if (ini_cond)
         {
             elem = get_ini_rand_elem();
         }
-        Setlink(linknumb, elem);
+        else
+        {
+            elem = {1, 0, 0, 0};
+        }
+        assert(data.size() - (linknumb + 3) >= 0);
+        std::copy(elem.begin(), elem.end(), data.begin() + linknumb);
     }
 }

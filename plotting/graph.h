@@ -15,6 +15,10 @@ using json = nlohmann::json;
 std::vector<double> Lattice_Plaqcalculation(int N, bool inimode, int Imax, double Beta, int Multithreadmode);
 // Returns expectation value of different sized Wilson loops for a lattice with given parameters after reaching equilibrium (after Imax iterations)
 std::vector<double> Lattice_Wloopcalculation(int N, bool inimode, int Imax, double Beta, int Multithreadmode);
+
+// Get values from futures(threading) and place into Latt_data
+void Unpackfutures(std::vector<std::vector<double>> &Latt_data, std::vector<std::future<std::vector<double>>> &futures, bool subiter);
+
 // Save data to json file in graphdata/
 void Saveas(json Jdata, std::string file_name);
 

@@ -1,5 +1,7 @@
 # Byte-compiled / optimized / DLL files
 Main
+*.txt
+*.out
 graphdata/*.json
 *.o
 gmon.out
