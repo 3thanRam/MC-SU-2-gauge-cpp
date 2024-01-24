@@ -7,6 +7,13 @@
 #include <random>
 #include <thread>
 #include <future>
+#include <math.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
+#include <algorithm>
+#include <string>
+#include <boost/tuple/tuple.hpp>
+#include <fstream>
 
 #ifndef UTIL
 #define UTIL
@@ -29,8 +36,8 @@ double get_ao(double beta, double k);
 std::vector<double> Paulimult(const std::vector<double> &Ma, const std::vector<double> &Mb);
 // Returns determiant of given matrix in Pauli basis
 double PauliDet(std::vector<double> &Ulink);
-// Rotates a given 3D vector in a random direction
-void Rotate_3Dvector_random(std::vector<double> &vect);
+// Returns a vector of given length in random 3D direction
+std::vector<double> Randirectionvector(double radius);
 /** Returns the Trace of the product of the given links
  * Input is list of all link elements
  * To be multiplied by grouping each link (which is of size 4)

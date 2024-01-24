@@ -49,8 +49,7 @@ std::vector<double> Lattice::Neighprod(int ind1, int ind2, int ind3, int ind4, i
 std::vector<double> Lattice::Neighbours(int ind1, int ind2, int ind3, int ind4, int d1, int d2, int signd1, int signd2, int Wsize)
 {
     std::vector<double> Ulist(16 * Wsize);
-    std::vector<double> a_elem;
-    a_elem.reserve(4);
+    std::vector<double> a_elem(4);
     std::vector<int> Xini{ind1, ind2, ind3, ind4};
     int w, x, y, z;
     auto Uargs = [this](std::vector<int> const &Xijkl, int Ws, int dd, int signdd)
@@ -155,7 +154,7 @@ void Lattice::Average_plaquette()
 void Lattice::Wloop_expct()
 {
     int Wmax = MaxWilsonloop(Lattice_length);
-    Wloop_data.push_back(1 - Action() / (Nplaq));
+    Wloop_data.push_back(1 - (Action() / Nplaq));
     for (int WS = 2; WS < Wmax; WS++)
     {
         Wloop_data.push_back(Action(WS) / (Nplaq));
@@ -185,11 +184,11 @@ std::vector<double> Lattice::New_element(double beta, int i1, int i2, int i3, in
     double k = sqrt(PauliDet(USum));
     New_a_elem[0] = get_ao(beta, k);
     double vect3length = sqrt(1 - New_a_elem[0] * New_a_elem[0]);
-    std::vector<double> a_3vect = {vect3length, 0, 0};
-    Rotate_3Dvector_random(a_3vect);
+    std::vector<double> a_3vect = Randirectionvector(vect3length);
     New_a_elem[1] = a_3vect[0];
     New_a_elem[2] = a_3vect[1];
     New_a_elem[3] = a_3vect[2];
+    assert(abs(PauliDet(New_a_elem) - 1) < 1e-10);
     return (New_a_elem);
 }
 /** Replaces each link in the lattice by touching a heatbath to each link
@@ -198,7 +197,6 @@ std::vector<double> Lattice::New_element(double beta, int i1, int i2, int i3, in
 void Lattice::Touchheat(double Beta)
 {
     a_array New_a(Lattice_length);
-    // New_a.init(0);
     if (Multithreadmode == 2)
     {
         std::vector<std::future<std::vector<std::pair<int, std::vector<double>>>>> futures;
@@ -207,7 +205,7 @@ void Lattice::Touchheat(double Beta)
         auto init_fct = [this]()
         {
             std::vector<std::pair<int, std::vector<double>>> mpdata;
-            mpdata.reserve(16 * pow(Lattice_length, 4));
+            mpdata.reserve(2 * pow(Lattice_length, 4));
             return mpdata;
         };
         auto mpupdate_fct = [this](std::vector<std::pair<int, std::vector<double>>> &mpdata, double Beta, int ind0, int ind1, int ind2, int ind3, int ind4)
@@ -215,7 +213,7 @@ void Lattice::Touchheat(double Beta)
             std::vector<double> elem = New_element(Beta, ind0, ind1, ind2, ind3, ind4);
             int linknumb = (ind0 * 4 * pow(Lattice_length, 3) + ind1 * 4 * Lattice_length * Lattice_length + ind2 * 4 * Lattice_length + ind3 * 4 + ind4) * 4;
             assert(3 + linknumb < 4 * totnumb_orientlinks);
-            mpdata.emplace_back(std::make_pair(linknumb, elem));
+            mpdata.emplace_back(linknumb, elem);
         };
         mpcounter(New_a, Beta, futures, update_target, init_fct, mpupdate_fct);
     }

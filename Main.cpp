@@ -59,15 +59,15 @@ int main()
             Graph1(Nlist, Iterations, Beta, Multithreadmode);
             break;
         case '2':
-            Betavect = {1.2, 1.6, 2.0, 2.4}; // Manual list of inverse tempertures beta
-            Graph2(Nlist[0], Iterations, Betavect, Multithreadmode);
+            Betavect = Rangevalues(1.2, 3.6, 6); // small list of inverse tempertures beta
+            Graph2(Nlist[Nlist.size() - 1], Iterations, Betavect, Multithreadmode);
             break;
         case '3':
             Graph3(Nlist, Iterations, Beta, Multithreadmode);
             break;
         case '4':
             Betavect = Rangevalues(0.1, 4, 20); // Large vector of inverse tempertures beta between 0.1 and 4
-            Graph4(Nlist[0], Iterations, Betavect, Multithreadmode);
+            Graph4(Nlist[Nlist.size() - 1], Iterations, Betavect, Multithreadmode);
             break;
         }
         auto finish = std::chrono::high_resolution_clock::now();

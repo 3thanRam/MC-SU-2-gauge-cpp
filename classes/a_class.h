@@ -1,11 +1,4 @@
-#include <vector>
-#include <math.h>
-#include <iostream>
-#include <glm/glm.hpp>
-#include <glm/gtx/norm.hpp>
 #include "../misc/Util.h"
-
-using namespace glm;
 
 #ifndef A_CLASS
 #define A_CLASS

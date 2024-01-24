@@ -1,5 +1,4 @@
 #include "../classes/a_class.h"
-#include <functional>
 
 #ifndef LATTICE
 #define LATTICE
@@ -9,7 +8,7 @@ struct Lattice
     unsigned int Lattice_length;     // length of the lattice
     bool ini_cond;                   // initial state of array a: {1,0,0,0}(0) or random(1)
     int totnumb_orientlinks;         // 4 * pow(Lat_Length_set, 4)
-    int Nplaq;                       // degeneracy(direction1)*degeneracy(direction2)=2*(3*2) -> =12 * totnumb_orientlinks
+    int Nplaq;                       // degeneracy(direction1)*degeneracy(direction2)=2x(3x2) -> =12 x totnumb_orientlinks (x4 of direct1 degeneracy factor already included in totnumb_orientlinks)
     a_array a;                       // Where the links are stored
     int Multithreadmode;             // If and how the tasks are split using threading and futures
     std::vector<double> Avplaq_data; // vector of Average plaquette at each iteration
@@ -23,6 +22,10 @@ struct Lattice
           a(Lattice_length_set),
           Multithreadmode(Multithreadmode_set)
     {
+        if (Lattice_length < 4)
+        {
+            Multithreadmode = 0;
+        }
         a.init(ini_cond);
     }
 

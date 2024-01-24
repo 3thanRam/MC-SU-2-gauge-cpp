@@ -2,7 +2,7 @@
 std::random_device rd;
 std::default_random_engine generator(rd());
 std::uniform_real_distribution<double> unidistribution(0, 1);
-int randiter = 1; // potentially increase randomness
+int randiter = 5; // potentially increase randomness
 
 double Random()
 {
@@ -42,53 +42,39 @@ std::vector<double> get_ini_rand_elem()
 {
     std::vector<double> elem;
     elem.reserve(4);
-    elem.push_back(Random() * 2 - 1);
+    elem.emplace_back(Random() * 2 - 1.);
     double vect3length = sqrt(1 - elem[0] * elem[0]);
-    std::vector<double> a_3vect = {vect3length, 0, 0};
-    Rotate_3Dvector_random(a_3vect);
-    elem.push_back(a_3vect[0]);
-    elem.push_back(a_3vect[1]);
-    elem.push_back(a_3vect[2]);
+    std::vector<double> a_3vect = Randirectionvector(vect3length);
+    elem.emplace_back(a_3vect[0]);
+    elem.emplace_back(a_3vect[1]);
+    elem.emplace_back(a_3vect[2]);
     return elem;
 }
 
-void Rotate_3Dvector_random(std::vector<double> &vect)
+std::vector<double> Randirectionvector(double radius)
 {
-    std::vector<double> Rands(3);
-    double alpha, cos_alpha, sin_alpha, beta, cos_beta, sin_beta, gamma, cos_gamma, sin_gamma, a, b, c, d, e, f, g, h, i, vectx, vecty, vectz;
+    std::vector<double> vect(3);
+    double rescale;
+    double len2 = 2;
+    auto genrandxyz = [](double a, double b)
+    {
+        return std::vector<double>{a + Random() * (b - a), a + Random() * (b - a), a + Random() * (b - a)};
+    };
+    auto length2 = [](std::vector<double> vects)
+    {
+        return vects[0] * vects[0] + vects[1] * vects[1] + vects[2] * vects[2];
+    };
 
-    Rands = Random(3);
-    alpha = Rands[0] * 2 * 3.14159;
-    beta = Rands[1] * 2 * 3.14159;
-    gamma = Rands[2] * 2 * 3.14159;
-
-    cos_alpha = cos(alpha);
-    sin_alpha = sin(alpha);
-
-    cos_beta = cos(beta);
-    sin_beta = sin(beta);
-
-    cos_gamma = cos(gamma);
-    sin_gamma = sin(gamma);
-
-    a = cos_alpha * cos_beta;
-    b = cos_alpha * sin_beta * sin_gamma - sin_alpha * cos_gamma;
-    c = cos_alpha * sin_beta * cos_gamma + sin_alpha * sin_gamma;
-
-    d = sin_alpha * cos_beta;
-    e = sin_alpha * sin_beta * sin_gamma + cos_alpha * cos_gamma;
-    f = sin_alpha * sin_beta * cos_gamma - cos_alpha * sin_gamma;
-
-    g = -sin_beta;
-    h = cos_beta * sin_gamma;
-    i = cos_beta * cos_gamma;
-
-    vectx = a * vect[0] + b * vect[1] + c * vect[2];
-    vecty = d * vect[0] + e * vect[1] + f * vect[2];
-    vectz = g * vect[0] + h * vect[2] + i * vect[2];
-    vect[0] = vectx;
-    vect[1] = vecty;
-    vect[2] = vectz;
+    while (len2 > 1.)
+    {
+        vect = genrandxyz(-1, 1);
+        len2 = length2(vect);
+    }
+    rescale = radius / sqrt(len2);
+    vect[0] *= rescale;
+    vect[1] *= rescale;
+    vect[2] *= rescale;
+    return vect;
 }
 
 double get_ao(double beta, double k)
@@ -99,9 +85,9 @@ double get_ao(double beta, double k)
     double x;
     while (Reject == 1)
     {
-        x = expo + Random() * (1 - expo);
-        ao = 1 + (log(x) / (beta * k));
-        Reject = Choice(sqrt(1 - ao * ao));
+        x = expo + Random() * (1. - expo);
+        ao = 1. + (log(x) / (beta * k));
+        Reject = Choice(sqrt(1. - ao * ao));
     }
     return (ao);
 }
@@ -132,6 +118,7 @@ double Trace(std::vector<double> const &Ulist)
     for (int u = 4; u < Ulist.size(); u += 4)
     {
         std::vector<double> Vectu(Ulist.end() - u - 4, Ulist.end() - u);
+        assert(abs(PauliDet(Vectu) - 1) < 1e-10);
         Prod = Paulimult(Vectu, Prod);
     }
     return 2 * Prod[0];

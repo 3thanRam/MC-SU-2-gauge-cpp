@@ -1,10 +1,3 @@
-#include <algorithm>
-#include <string>
-#include <cmath>
-#include <boost/tuple/tuple.hpp>
-#include <functional>
-#include <iostream>
-#include <fstream>
 #include "../classes/lattice.h"
 #include "../misc/json.hpp"
 

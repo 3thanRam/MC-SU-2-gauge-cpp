@@ -266,7 +266,7 @@ void Graph4(int Nsize, int Iterations, std::vector<double> Betalist, int Multith
         for (auto beta : Betalist)
         {
             std::vector<double> Latticeb = Lattice_Wloopcalculation(Nsize, 0, Iterations, beta, Multithreadmode);
-            for (int l = 0; l < Latticeb.size(); l++)
+            for (int l = 0; l < Nloops; l++)
             {
                 Latt_data[l].emplace_back(Latticeb[l]);
             }
