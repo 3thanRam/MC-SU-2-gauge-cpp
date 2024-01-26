@@ -1,6 +1,6 @@
 WIP(incorrect results)
 
-[For those more confortable with python](https://github.com/3thanRam/MC-pure-SU-2-lattice-gauge)
+[For those more comfortable with python](https://github.com/3thanRam/MC-pure-SU-2-lattice-gauge)
 
 Calculations based on M.Creutz Phys Rev D article published in Physical review D, 21,(15/04/1980):
 
