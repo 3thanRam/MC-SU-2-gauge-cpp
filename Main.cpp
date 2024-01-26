@@ -28,6 +28,15 @@ std::vector<double> Rangevalues(double a, double b, int N)
 
 int main()
 {
+    std::string cpath = std::filesystem::current_path();
+    std::string grppath = cpath + "/graphdata"; // Path to graphdata directory
+    struct stat sb;                             // Structure which would store the metadata
+    if (stat((grppath).data(), &sb) != 0)       // if directory doesn't exist then create it
+    {
+        std::cout << "Generating graphdata directory" << std::endl;
+        mkdir((grppath).data(), 0777);
+    }
+
     /**0-> No multithread
      * 1-> Perform calculations on different lattices in parrallel
      * 2-> Inside a lattice perform independent calculations in parrallel eg: action contribution from each site
@@ -39,10 +48,19 @@ int main()
     std::cout << "Choose which figure to plot 1,2,3,4: ";
     std::cin >> graphNumb;
 
-    //"Plot saved(0)/ new data(1) : "
+    //"Plot saved(0) or  new data(1)"
     bool Calc;
-    std::cout << "Plot already saved data(0) or calculate new data & plot (1): ";
-    std::cin >> Calc;
+    std::string datapath = cpath + "/graphdata/json_data" + graphNumb + ".json"; // Path to graphdata directory
+    // struct stat sb;                                                              // Structure which would store the metadata
+    if (stat((datapath).data(), &sb) != 0) // if directory doesn't exist then force calc=1
+    {
+        Calc = 1;
+    }
+    else
+    {
+        std::cout << "Plot already saved data(0) or calculate new data & plot (1): ";
+        std::cin >> Calc;
+    }
 
     int Iterations = 30;          // Number of iterations before asuming equilibrium
     std::vector<int> Nlist = {6}; // List of lattice sizes

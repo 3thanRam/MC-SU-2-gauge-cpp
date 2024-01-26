@@ -51,30 +51,16 @@ std::vector<double> get_ini_rand_elem()
     return elem;
 }
 
-std::vector<double> Randirectionvector(double radius)
+std::vector<double> Randirectionvector(double length)
 {
-    std::vector<double> vect(3);
-    double rescale;
-    double len2 = 2;
-    auto genrandxyz = [](double a, double b)
-    {
-        return std::vector<double>{a + Random() * (b - a), a + Random() * (b - a), a + Random() * (b - a)};
-    };
-    auto length2 = [](std::vector<double> vects)
-    {
-        return vects[0] * vects[0] + vects[1] * vects[1] + vects[2] * vects[2];
-    };
+    double theta = 2 * M_PI * unidistribution(generator);  // Azimuthal angle
+    double phi = acos(2 * unidistribution(generator) - 1); // Polar angle
 
-    while (len2 > 1.)
-    {
-        vect = genrandxyz(-1, 1);
-        len2 = length2(vect);
-    }
-    rescale = radius / sqrt(len2);
-    vect[0] *= rescale;
-    vect[1] *= rescale;
-    vect[2] *= rescale;
-    return vect;
+    double x = length * sin(phi) * cos(theta);
+    double y = length * sin(phi) * sin(theta);
+    double z = length * cos(phi);
+
+    return {x, y, z};
 }
 
 double get_ao(double beta, double k)
@@ -101,6 +87,7 @@ std::vector<double> Paulimult(const std::vector<double> &Ma, const std::vector<d
     MProd.emplace_back(Ma[0] * Mb[1] + Ma[1] * Mb[0] - (Ma[2] * Mb[3] - Ma[3] * Mb[2]));
     MProd.emplace_back(Ma[0] * Mb[2] + Ma[2] * Mb[0] - (Ma[3] * Mb[1] - Ma[1] * Mb[3]));
     MProd.emplace_back(Ma[0] * Mb[3] + Ma[3] * Mb[0] - (Ma[1] * Mb[2] - Ma[2] * Mb[1]));
+    assert(abs(PauliDet(MProd) - 1) < 1e-10);
     return MProd;
 }
 int Mod(int a, int b)
@@ -118,8 +105,9 @@ double Trace(std::vector<double> const &Ulist)
     for (int u = 4; u < Ulist.size(); u += 4)
     {
         std::vector<double> Vectu(Ulist.end() - u - 4, Ulist.end() - u);
-        assert(abs(PauliDet(Vectu) - 1) < 1e-10);
+        assert(abs(PauliDet(Vectu) - 1.) < 1e-10);
         Prod = Paulimult(Vectu, Prod);
+        assert(abs(PauliDet(Prod) - 1.) < 1e-10);
     }
     return 2 * Prod[0];
 }
