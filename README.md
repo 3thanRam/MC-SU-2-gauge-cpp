@@ -1,5 +1,7 @@
 WIP(incorrect results)
-[python version](https://github.com/3thanRam/MC-SU-2-gauge-cpp)
+
+[For those more confortable with python](https://github.com/3thanRam/MC-pure-SU-2-lattice-gauge)
+
 Calculations based on M.Creutz Phys Rev D article published in Physical review D, 21,(15/04/1980):
 
 Monte Carlo Study of quantized SU(2) gauge theory
