@@ -1,5 +1,6 @@
 #include "../include/latticeclass.h"
 
+// Get the staple at a given site and direction
 element Lattice::Staple(int ix, int mu, int nu)
 {
     std::array<int, 4> Uo4inds = a.conv1to4Index(ix);
@@ -56,6 +57,7 @@ element Lattice::Staple(int ix, int mu, int nu)
     return SU2sum(forwStaple, backwStaple);
 }
 
+// Generate a new link variable at a given site and direction
 void Lattice::New_element(double Beta, int ix, int mu)
 {
 
@@ -104,6 +106,7 @@ void Lattice::New_element(double Beta, int ix, int mu)
     // exit(1);
 }
 
+// Get the plaquette at a given site and direction
 double Lattice::plaquette(int ix, int mu, int nu)
 {
 
@@ -138,6 +141,7 @@ double Lattice::plaquette(int ix, int mu, int nu)
     return SU2Trace(plaqprod);
 }
 
+// Get average plaquette over the whole lattice
 double Lattice::averagePlaquette()
 {
     double S = 0.;
@@ -155,12 +159,13 @@ double Lattice::averagePlaquette()
     return S;
 }
 
+// Get average action from average plaquette
 double Lattice::averageAction()
 {
     return 1 - averagePlaquette();
 }
 
-/** Repeated application of touching a heatbath to each link variable to achieve equilibrium*/
+/** Touch a heatbath to each link variable to achieve equilibrium*/
 void Lattice::heatbath(double Beta)
 {
     for (int ix = 0; ix < V; ix++)
@@ -172,6 +177,7 @@ void Lattice::heatbath(double Beta)
     }
 };
 
+/** Generate a new set of gauge group elements for each site */
 void Lattice::gaugeregenerate()
 {
     for (auto &elem : g)
@@ -197,7 +203,7 @@ void Lattice::gaugeTransformation()
     }
 };
 
-/** Repeated application of touching a heatbath to each link variable to achieve equilibrium*/
+/** Repeated application of touching a heatbath to whole system achieve equilibrium*/
 void Lattice::equilibrium(int Iterations, double Beta)
 {
     // gaugeTransformation();

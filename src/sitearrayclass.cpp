@@ -1,5 +1,6 @@
 #include "../include/sitearrayclass.h"
 
+// Either set all links to (1,0,0,0) or random SU(2) element
 void site_array::init(bool ini_cond)
 {
     for (int ix = 0; ix < V; ix++)
@@ -18,13 +19,13 @@ void site_array::init(bool ini_cond)
     }
 }
 
-/**Translate multi-index to single index*/
+// Translate multi-index to single index
 int site_array::conv4to1Index(std::array<int, 4> ix)
 {
     return (((ix[0] * L + ix[1]) * L + ix[2]) * L + ix[3]);
 }
 
-/**Translate single index to multi-index */
+// Translate single index to multi-index
 std::array<int, 4> site_array::conv1to4Index(int ix0)
 {
     int ix = ix0;

@@ -12,10 +12,13 @@ struct site_array
     site_array(){};
     site_array(int L) : L(L), V(intpow(L, 4)), data(V) {}
 
-    /**Either set all links to (1,0,0,0) or random element (of determiant 1)*/
+    // Either set all links to (1,0,0,0) or random element (of determiant 1)
     void init(bool ini_cond);
 
+    // Translate multi-index to single index
     int conv4to1Index(std::array<int, 4> site4inds);
+
+    // Translate single index to multi-index
     std::array<int, 4> conv1to4Index(int ix);
 };
 #endif

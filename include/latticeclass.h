@@ -22,14 +22,32 @@ struct Lattice
     {
         a.init(ini_cond);
     }
+
+    // Get the staple at a given site and direction
     element Staple(int ix, int mu, int nu);
-    void heatbath(double Beta);
-    void equilibrium(int Iterations, double Beta);
+
+    // Generate a new link variable at a given site and direction
     void New_element(double Beta, int linknumber, int mu);
+
+    // Get the plaquette at a given site and direction
     double plaquette(int ix, int mu, int nu);
+
+    // Get average plaquette over the whole lattice
     double averagePlaquette();
+
+    // Get average action from average plaquette
     double averageAction();
+
+    /** Touch a heatbath to each link variable to achieve equilibrium*/
+    void heatbath(double Beta);
+
+    /** Generate a new set of gauge group elements for each site */
     void gaugeregenerate();
+
+    /** The plaquete average should be unchanged under the local gauge transformation U_{ij}-> g_{i} U_{ij} g_{j}^{-1} */
     void gaugeTransformation();
+
+    /** Repeated application of touching a heatbath to whole system achieve equilibrium*/
+    void equilibrium(int Iterations, double Beta);
 };
 #endif

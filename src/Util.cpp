@@ -10,6 +10,7 @@ int Mod(int a, int b)
     return r < 0 ? r + b : r;
 }
 
+// resets random number generator using given seed
 void init_seed()
 {
     generator.seed(07022024);
@@ -33,6 +34,7 @@ bool Choice(double proba1)
     return (1. - proba1) > unidistribution(generator);
 }
 
+// Returns a random element of SU(2)
 element get_ini_rand_elem()
 {
     element U = {0., 0., 0., 0.};
@@ -42,6 +44,8 @@ element get_ini_rand_elem()
     return U;
 }
 
+/** returns random 1st value of link
+ * based on boltzmann distribution on beta(inverse) & k (determiant of other links in wilson loop)*/
 double get_ao(double betak)
 {
     double expo = exp(-2. * betak);
@@ -70,6 +74,7 @@ void check_SU2det(const element &Ulink)
     assert(abs(SU2det(Ulink) - 1.) < 1e-10);
 }
 
+// Returns the inverse of a given SU(2) element
 element reversedlink(const element &link)
 {
     element reversedlink = link;
@@ -90,11 +95,13 @@ double Trace(const std::vector<element> &Ulist)
     return 2. * Uprod[0];
 }
 
+// Return the trace of a single SU(2) element
 double SU2Trace(const element &Ulist)
 {
     return 2. * Ulist[0];
 }
-// Returns prod of 2 matrices in Pauli basis (I,pauli_x,pauli_y,pauli_z)
+
+// Returns prod of 2 SU(2) in Pauli basis (I,pauli_x,pauli_y,pauli_z)
 element SU2multSU2(const element &Ua, const element &Ub)
 {
     element UProd;
@@ -106,6 +113,7 @@ element SU2multSU2(const element &Ua, const element &Ub)
     return UProd;
 }
 
+// Returns prod of SU(2) times inverse of a second SU(2) element
 element SU2multSU2dag(const element &Ua, const element &Ub)
 {
     element UProd;
@@ -116,6 +124,8 @@ element SU2multSU2dag(const element &Ua, const element &Ub)
     UProd[3] = -Ua[0] * Ub[3] + Ua[3] * Ub[0] + (Ua[1] * Ub[2] - Ua[2] * Ub[1]);
     return UProd;
 }
+
+// Performs the sum of two SU(2) elements
 element SU2sum(const element &Ua, const element &Ub)
 {
     element Usum;
