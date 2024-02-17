@@ -47,7 +47,7 @@ void Graph1(std::vector<int> Llist, int Iterations, double Beta)
     std::cout << "Sorting datapoints" << std::endl;
     for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
     {
-        for (int n = 0; n < Llist.size(); n++)
+        for (uint n = 0; n < Llist.size(); n++)
         {
             std::stringstream ginfo;
             ginfo << "V=" << Llist[n] << "^4 Inimode:" << Ini_mode;
@@ -91,7 +91,7 @@ void Graph2(int L, int Iterations, std::vector<double> Betalist)
     }
 
     std::cout << "Sorting datapoints" << std::endl;
-    for (int b = 0; b < Betalist.size(); b++)
+    for (uint b = 0; b < Betalist.size(); b++)
     {
         std::stringstream ginfo;
         ginfo << "beta=" << Betalist[b];
