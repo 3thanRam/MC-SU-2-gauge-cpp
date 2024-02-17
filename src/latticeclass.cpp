@@ -51,8 +51,8 @@ element Lattice::Staple(int ix, int mu, int nu)
     U3bc4inds[nu] = (U3bc4inds[nu] - 1 + L) % L;
     int bck3ix = a.conv4to1Index(U3bc4inds);
 
-    element forwStaple = SU2multSU2dag(a.data[forw1ix][nu], SU2multSU2(a.data[ix][nu], a.data[forw2ix][mu]));
-    element backwStaple = SU2multSU2(reversedlink(SU2multSU2(a.data[bck2ix][mu], a.data[bck1ix][nu])), a.data[bck3ix][nu]);
+    element forwStaple = SU2multSU2dag(a.U[forw1ix]->at(nu), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
+    element backwStaple = SU2multSU2(reversedlink(SU2multSU2(a.U[bck2ix]->at(mu), a.U[bck1ix]->at(nu))), a.U[bck3ix]->at(nu));
 
     return SU2sum(forwStaple, backwStaple);
 }
@@ -63,7 +63,7 @@ void Lattice::New_element(double Beta, int ix, int mu)
 
     // auto wt1 = std::chrono::high_resolution_clock::now();
 
-    double k, vect3length;
+    double k;
     std::vector<double> a_3vect;
 
     element Usum = {0., 0., 0., 0.};
@@ -95,7 +95,7 @@ void Lattice::New_element(double Beta, int ix, int mu)
 
     element NewUelem = SU2multSU2dag(New_a_elem, Usum);
 
-    a.data[ix][mu] = NewUelem;
+    a.U[ix]->at(mu) = NewUelem;
     // auto wt5 = std::chrono::high_resolution_clock::now();
     // double Totaltime = std::chrono::duration_cast<std::chrono::microseconds>(wt5 - wt1).count();
     // double elapsed1 = 100 * std::chrono::duration_cast<std::chrono::microseconds>(wt2 - wt1).count() / Totaltime;
@@ -135,9 +135,7 @@ double Lattice::plaquette(int ix, int mu, int nu)
     int forw2ix = a.conv4to1Index(U2forw4inds);
 
     // U3: inverse of link starting at ix with direction nu
-    // element plaqprod = SU2multSU2(a.data[ix][mu], SU2multSU2(a.data[forw1ix][nu], SU2multSU2(reversedlink(a.data[forw2ix][mu]), reversedlink(a.data[ix][nu]))));
-
-    element plaqprod = SU2multSU2dag(SU2multSU2(a.data[ix][mu], a.data[forw1ix][nu]), SU2multSU2(a.data[ix][nu], a.data[forw2ix][mu]));
+    element plaqprod = SU2multSU2dag(SU2multSU2(a.U[ix]->at(mu), a.U[forw1ix]->at(nu)), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
     return SU2Trace(plaqprod);
 }
 
@@ -198,7 +196,7 @@ void Lattice::gaugeTransformation()
             linkedinds[mu] = (linkedinds[mu] + 1) % L;
             int linkedsitenumb = a.conv4to1Index(linkedinds);
 
-            a.data[ix][mu] = SU2multSU2(g[ix], SU2multSU2(a.data[ix][mu], reversedlink(g[linkedsitenumb])));
+            a.U[ix]->at(mu) = SU2multSU2(g[ix], SU2multSU2(a.U[ix]->at(mu), reversedlink(g[linkedsitenumb])));
         }
     }
 };
