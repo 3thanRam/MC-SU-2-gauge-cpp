@@ -10,10 +10,8 @@ void Saveas(json Jdata, std::string file_name)
 
 std::vector<double> Lattice_Plaqcalculation(int lattsize, int Ini_mode, int Iterations, double Beta)
 {
-    std::vector<double> Latt_data;
     Lattice lattice(lattsize, Ini_mode);
     lattice.equilibrium(Iterations, Beta);
-    printf("Finished Plaquette Calculation (L=%d, Inimode=%d,beta=%g)\n", lattsize, Ini_mode, Beta);
     return lattice.Avplaq_data;
 }
 
@@ -42,6 +40,7 @@ void Graph1(std::vector<int> Llist, int Iterations, double Beta)
         for (auto L : Llist)
         {
             Latt_data.emplace_back(Lattice_Plaqcalculation(L, Ini_mode, Iterations, Beta));
+            printf("Finished Plaquette Calculation (L=%d, Inimode=%d,beta=%g)\n", L, Ini_mode, Beta);
         }
     }
     std::cout << "Sorting datapoints" << std::endl;
@@ -88,6 +87,7 @@ void Graph2(int L, int Iterations, std::vector<double> Betalist)
     for (double beta : Betalist)
     {
         Latt_data.emplace_back(Lattice_Plaqcalculation(L, 0, Iterations, beta));
+        printf("Finished Plaquette Calculation (L=%d, Inimode=%d,beta=%g)\n", L, 0, beta);
     }
 
     std::cout << "Sorting datapoints" << std::endl;

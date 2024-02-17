@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS  = -g #-Wall -g -pg
+CFLAGS  = -O2 #-Wall -g -pg -fopenmp -O2 -O3
 
 all : Main
 Main : output/Main.o output/tests.o output/graphs.o output/latticeclass.o output/sitearrayclass.o  output/Util.o

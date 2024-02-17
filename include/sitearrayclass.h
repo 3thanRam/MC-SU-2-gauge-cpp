@@ -6,9 +6,10 @@
 /** Where & how the links are created,set,stored,accessed,.. */
 struct site_array
 {
-    int L;                                                  // size of the lattice
-    int V;                                                  // number of sites in the lattice
-    std::vector<std::unique_ptr<std::array<element, 4>>> U; //  where links are stored
+    int L; // size of the lattice
+    int V; // number of sites in the lattice
+    // std::vector<std::unique_ptr<std::array<element, 4>>> U; //  where links are stored
+    std::vector<std::array<element, 4>> U; //  where links are stored
     site_array(){};
     site_array(int L) : L(L), V(intpow(L, 4)), U(V) {}
 

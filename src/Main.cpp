@@ -50,7 +50,7 @@ int main()
         std::cin >> Calc;
     }
 
-    int Iterations = 50;          // Number of iterations before asuming equilibrium
+    int Iterations = 100;         // Number of iterations before asuming equilibrium
     std::vector<int> Nlist;       // List of lattice sizes
     int N;                        // single lattice size
     double Beta = 2.3;            // single inverse temperture
@@ -58,7 +58,7 @@ int main()
 
     if (Calc)
     {
-        int numIntegers = 1 * (graphNumb != 'T');
+        int numIntegers = 1 * (graphNumb != 'T' && graphNumb != 'd');
         if (graphNumb == '1' || graphNumb == '3')
         {
             std::cout << "Choose Number of Lattice sizes: ";
@@ -70,8 +70,8 @@ int main()
             std::cin >> N;
             Nlist.push_back(N);
         }
-        auto start = std::chrono::high_resolution_clock::now();
         std::cout << "Starting calculations" << std::endl;
+        auto start = std::chrono::high_resolution_clock::now();
         switch (graphNumb)
         {
         case '1':
@@ -93,7 +93,7 @@ int main()
             heatbath_test(Beta);
             break;
         default:
-            Lattice_Plaqcalculation(Nlist[0], 0, Iterations, Beta);
+            Lattice_Plaqcalculation(8, 0, Iterations, Beta);
             break;
         }
         auto finish = std::chrono::high_resolution_clock::now();

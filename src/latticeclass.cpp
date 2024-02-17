@@ -36,10 +36,9 @@ element Lattice::Staple(int ix, int mu, int nu)
     // BACKWARD (clockwise) staple:
 
     // inverse of link starting at ix+mu-nu with direction mu
-    std::array<int, 4> U1bc4inds = Uo4inds;
-    U1bc4inds[mu] = (U1bc4inds[mu] + 1) % L;
-    U1bc4inds[nu] = (U1bc4inds[nu] - 1 + L) % L;
-    int bck1ix = a.conv4to1Index(U1bc4inds);
+    // reuse U1forw4inds since it has same mu index
+    U1forw4inds[nu] = (U1forw4inds[nu] - 1 + L) % L;
+    int bck1ix = a.conv4to1Index(U1forw4inds);
 
     // inverse of link starting at ix - nu with direction mu
     std::array<int, 4> U2bc4inds = Uo4inds;
@@ -47,12 +46,12 @@ element Lattice::Staple(int ix, int mu, int nu)
     int bck2ix = a.conv4to1Index(U2bc4inds);
 
     // link starting at ix + mu with direction nu
-    std::array<int, 4> U3bc4inds = Uo4inds;
-    U3bc4inds[nu] = (U3bc4inds[nu] - 1 + L) % L;
-    int bck3ix = a.conv4to1Index(U3bc4inds);
+    // int bck3ix = bck2ix; same site as bck2ix
 
-    element forwStaple = SU2multSU2dag(a.U[forw1ix]->at(nu), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
-    element backwStaple = SU2multSU2(reversedlink(SU2multSU2(a.U[bck2ix]->at(mu), a.U[bck1ix]->at(nu))), a.U[bck3ix]->at(nu));
+    element forwStaple = SU2multSU2dag(a.U[forw1ix][nu], SU2multSU2(a.U[ix][nu], a.U[forw2ix][mu]));
+    // element forwStaple = SU2multSU2dag(a.U[forw1ix]->at(nu), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
+    element backwStaple = SU2multSU2(reversedlink(SU2multSU2(a.U[bck2ix][mu], a.U[bck1ix][nu])), a.U[bck2ix][nu]);
+    // element backwStaple = SU2multSU2(reversedlink(SU2multSU2(a.U[bck2ix]->at(mu), a.U[bck1ix]->at(nu))), a.U[bck2ix]->at(nu));
 
     return SU2sum(forwStaple, backwStaple);
 }
@@ -61,11 +60,10 @@ element Lattice::Staple(int ix, int mu, int nu)
 void Lattice::New_element(double Beta, int ix, int mu)
 {
 
-    // auto wt1 = std::chrono::high_resolution_clock::now();
-
     double k;
     std::vector<double> a_3vect;
 
+    // auto wt1 = std::chrono::high_resolution_clock::now();
     element Usum = {0., 0., 0., 0.};
     element New_a_elem;
     for (int nu = 0; nu < 4; nu++)
@@ -82,27 +80,32 @@ void Lattice::New_element(double Beta, int ix, int mu)
     New_a_elem[0] = get_ao(Beta * k);
     // auto wt3 = std::chrono::high_resolution_clock::now();
 
-    a_3vect = randirectionvector(sqrt(1. - New_a_elem[0] * New_a_elem[0]));
+    a_3vect = randirectionvector(std::sqrt(1. - New_a_elem[0] * New_a_elem[0]));
+    // auto wt4 = std::chrono::high_resolution_clock::now();
     New_a_elem[1] = a_3vect[0];
     New_a_elem[2] = a_3vect[1];
     New_a_elem[3] = a_3vect[2];
 
+    double inv_k = 1.0 / k;
     for (int d = 0; d < 4; d++)
     {
-        Usum[d] /= k;
+        Usum[d] *= inv_k;
     }
-    // auto wt4 = std::chrono::high_resolution_clock::now();
+    // auto wt5 = std::chrono::high_resolution_clock::now();
 
     element NewUelem = SU2multSU2dag(New_a_elem, Usum);
 
-    a.U[ix]->at(mu) = NewUelem;
-    // auto wt5 = std::chrono::high_resolution_clock::now();
-    // double Totaltime = std::chrono::duration_cast<std::chrono::microseconds>(wt5 - wt1).count();
+    a.U[ix][mu] = NewUelem;
+    // a.U[ix]->at(mu) = NewUelem;
+    // auto wt6 = std::chrono::high_resolution_clock::now();
+    // double Totaltime = std::chrono::duration_cast<std::chrono::microseconds>(wt6 - wt1).count();
     // double elapsed1 = 100 * std::chrono::duration_cast<std::chrono::microseconds>(wt2 - wt1).count() / Totaltime;
     // double elapsed2 = 100 * std::chrono::duration_cast<std::chrono::microseconds>(wt3 - wt2).count() / Totaltime;
     // double elapsed3 = 100 * std::chrono::duration_cast<std::chrono::microseconds>(wt4 - wt3).count() / Totaltime;
     // double elapsed4 = 100 * std::chrono::duration_cast<std::chrono::microseconds>(wt5 - wt4).count() / Totaltime;
-    // std::cout << "Totaltime " << Totaltime << "ms elapsed1 " << elapsed1 << "% elapsed2 " << elapsed2 << "% elapsed3 " << elapsed3 << "% elapsed4 " << elapsed4 << "%" << std::endl;
+    // double elapsed5 = 100 * std::chrono::duration_cast<std::chrono::microseconds>(wt6 - wt5).count() / Totaltime;
+    // std::cout << "Total: " << elapsed1 + elapsed2 + elapsed3 + elapsed4 + elapsed5 << "%" << std::endl;
+    // std::cout << "Totaltime " << Totaltime << "ms elapsed1 " << elapsed1 << "% elapsed2 " << elapsed2 << "% elapsed3 " << elapsed3 << "% elapsed4 " << elapsed4 << "% elapsed5 " << elapsed5 << "%" << std::endl;
     // exit(1);
 }
 
@@ -135,7 +138,8 @@ double Lattice::plaquette(int ix, int mu, int nu)
     int forw2ix = a.conv4to1Index(U2forw4inds);
 
     // U3: inverse of link starting at ix with direction nu
-    element plaqprod = SU2multSU2dag(SU2multSU2(a.U[ix]->at(mu), a.U[forw1ix]->at(nu)), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
+    // element plaqprod = SU2multSU2dag(SU2multSU2(a.U[ix]->at(mu), a.U[forw1ix]->at(nu)), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
+    element plaqprod = SU2multSU2dag(SU2multSU2(a.U[ix][mu], a.U[forw1ix][nu]), SU2multSU2(a.U[ix][nu], a.U[forw2ix][mu]));
     return SU2Trace(plaqprod);
 }
 
@@ -196,7 +200,8 @@ void Lattice::gaugeTransformation()
             linkedinds[mu] = (linkedinds[mu] + 1) % L;
             int linkedsitenumb = a.conv4to1Index(linkedinds);
 
-            a.U[ix]->at(mu) = SU2multSU2(g[ix], SU2multSU2(a.U[ix]->at(mu), reversedlink(g[linkedsitenumb])));
+            a.U[ix][mu] = SU2multSU2(g[ix], SU2multSU2(a.U[ix][mu], reversedlink(g[linkedsitenumb])));
+            // a.U[ix]->at(mu) = SU2multSU2(g[ix], SU2multSU2(a.U[ix]->at(mu), reversedlink(g[linkedsitenumb])));
         }
     }
 };
@@ -206,13 +211,14 @@ void Lattice::equilibrium(int Iterations, double Beta)
 {
     // gaugeTransformation();
     double Avplaq = 0;
+    Avplaq_data.reserve(Iterations);
     for (int i = 0; i < Iterations; i++)
     {
         heatbath(Beta);
         Avplaq_data.push_back(averageAction());
         if (i > 20)
         {
-            Avplaq += Avplaq_data.back();
+            Avplaq += Avplaq_data[i];
         }
     }
     Avplaq /= (Iterations - 20);

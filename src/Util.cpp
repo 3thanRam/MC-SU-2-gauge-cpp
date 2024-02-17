@@ -34,6 +34,24 @@ bool Choice(double proba1)
     return (1. - proba1) > unidistribution(generator);
 }
 
+/** returns random 1st value of link
+ * based on boltzmann distribution on beta(inverse) & k (determiant of other links in wilson loop)*/
+double get_ao(double betak)
+{
+    double expo = std::exp(-2. * betak);
+    double ao;
+    double x;
+    while (true)
+    {
+        x = expo + Random() * (1. - expo);
+        ao = 1. + (std::log(x) / betak);
+        if (!Choice(std::sqrt(1. - ao * ao))) // reject(1) with probability 1-sqrt(1-ao^2) <=> keep(0) with probability sqrt(1-ao^2)
+        {
+            break;
+        }
+    }
+    return ao;
+}
 // Returns a random element of SU(2)
 element get_ini_rand_elem()
 {
@@ -43,26 +61,6 @@ element get_ini_rand_elem()
     std::copy(a_3vect.begin(), a_3vect.end(), U.begin() + 1);
     return U;
 }
-
-/** returns random 1st value of link
- * based on boltzmann distribution on beta(inverse) & k (determiant of other links in wilson loop)*/
-double get_ao(double betak)
-{
-    double expo = exp(-2. * betak);
-    double ao;
-    double x;
-    while (true)
-    {
-        x = expo + Random() * (1. - expo);
-        ao = 1. + (log(x) / betak);
-        if (Choice(sqrt(1. - ao * ao)) == 0) // reject(1) with probability 1-sqrt(1-ao^2) <=> keep(0) with probability sqrt(1-ao^2)
-        {
-            break;
-        }
-    }
-    return ao;
-}
-
 // Returns SU2determiant of given matrix in Pauli basis
 double SU2det(const element &Ulink)
 {
@@ -129,11 +127,10 @@ element SU2multSU2dag(const element &Ua, const element &Ub)
 element SU2sum(const element &Ua, const element &Ub)
 {
     element Usum;
-
-    Usum[0] = Ua[0] + Ub[0];
-    Usum[1] = Ua[1] + Ub[1];
-    Usum[2] = Ua[2] + Ub[2];
-    Usum[3] = Ua[3] + Ub[3];
+    for (int d = 0; d < 4; d++)
+    {
+        Usum[d] = Ua[d] + Ub[d];
+    }
     return Usum;
 }
 

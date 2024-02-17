@@ -5,16 +5,18 @@ void site_array::init(bool ini_cond)
 {
     for (int ix = 0; ix < V; ix++)
     {
-        U[ix] = std::make_unique<std::array<element, 4>>();
+        // U[ix] = std::make_unique<std::array<element, 4>>();
         for (int mu = 0; mu < 4; mu++)
         {
             if (ini_cond)
             {
-                U[ix]->at(mu) = get_ini_rand_elem();
+                U[ix][mu] = get_ini_rand_elem();
+                // U[ix]->at(mu) = get_ini_rand_elem();
             }
             else
             {
-                U[ix]->at(mu) = {1., 0., 0., 0.};
+                U[ix][mu] = {1., 0., 0., 0.};
+                // U[ix]->at(mu) = {1., 0., 0., 0.};
             }
         }
     }
