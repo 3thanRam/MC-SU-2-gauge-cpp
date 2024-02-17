@@ -136,8 +136,10 @@ def DRAW(Graphnumb):
         marker,linestyle=Markers[Graphnumb-1],Linestyles[Graphnumb-1]
         
         if Graphnumb==1:
-            n=int(np.log2(int(graphinfo[2])))-1
+            n=int(0.5*(int(graphinfo[2])))-1
             inimode=int(graphinfo[-1])
+            graphinfo=graphinfo[:-9]
+            graphinfo+=["Coldstart","Hotstart"][inimode]
             color=COLORS[n]
             linestyle=linestyle[inimode]
             marker=marker[inimode]

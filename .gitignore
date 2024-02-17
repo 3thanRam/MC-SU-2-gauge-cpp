@@ -1,7 +1,5 @@
 # Byte-compiled / optimized / DLL files
 Main
-graphdata/
 *.txt
 *.out
-*.o
-gmon.out
+gmon.out 

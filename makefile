@@ -1,13 +1,15 @@
 all : Main
-Main : Main.o plotting/graph.o classes/lattice.o classes/a_class.o misc/Util.o
-	g++ -o Main Main.o plotting/graph.o classes/lattice.o classes/a_class.o misc/Util.o -lpython3.10
-Main.o: Main.cpp plotting/graph.h classes/lattice.h 
-	g++ -c Main.cpp -o Main.o
-plotting/graph.o: plotting/graph.cpp classes/lattice.h misc/Util.h
-	g++ -c plotting/graph.cpp -o plotting/graph.o
-classes/lattice.o: classes/lattice.cpp classes/a_class.h misc/Util.h
-	g++ -c classes/lattice.cpp -o classes/lattice.o
-classes/a_class.o: classes/a_class.cpp misc/Util.h
-	g++ -c classes/a_class.cpp -o classes/a_class.o
-misc/Util.o: misc/Util.cpp 
-	g++ -c misc/Util.cpp -o misc/Util.o
+Main : output/Main.o output/tests.o output/graphs.o output/latticeclass.o output/sitearrayclass.o  output/Util.o
+	g++ -pg -o Main output/Main.o output/tests.o output/graphs.o output/latticeclass.o output/sitearrayclass.o output/Util.o -lpython3.10
+output/Main.o: src/Main.cpp include/graphs.h include/tests.h include/latticeclass.h include/sitearrayclass.h include/Util.h
+	g++ -pg -c src/Main.cpp -o output/Main.o
+output/tests.o: src/tests.cpp  include/latticeclass.h
+	g++ -pg -c src/tests.cpp -o output/tests.o
+output/graphs.o: plotting/graphs.cpp  include/Util.h
+	g++ -pg -c plotting/graphs.cpp -o output/graphs.o
+output/latticeclass.o: src/latticeclass.cpp include/sitearrayclass.h include/Util.h
+	g++ -pg -c src/latticeclass.cpp -o output/latticeclass.o
+output/sitearrayclass.o: src/sitearrayclass.cpp  include/Util.h
+	g++ -pg -c src/sitearrayclass.cpp -o output/sitearrayclass.o
+output/Util.o: src/Util.cpp 
+	g++ -pg -c src/Util.cpp -o output/Util.o
