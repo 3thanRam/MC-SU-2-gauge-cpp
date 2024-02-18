@@ -5,14 +5,9 @@
 #include <time.h>
 #include <functional>
 #include <random>
-#include <thread>
-#include <future>
 #include <math.h>
-#include <glm/glm.hpp>
-#include <glm/gtx/norm.hpp>
 #include <algorithm>
 #include <string>
-#include <boost/tuple/tuple.hpp>
 #include <fstream>
 #include <python3.10/Python.h>
 #include "json.hpp"
@@ -50,6 +45,8 @@ element SU2multSU2(const element &Ma, const element &Mb);
 // Returns prod of SU(2) times inverse of a second SU(2) element
 element SU2multSU2dag(const element &Ua, const element &Ub);
 
+// Returns prod of inverse of a SU(2) element times and a second SU(2) element
+element SU2dagmultSU2(const element &Ua, const element &Ub);
 // Performs the sum of two SU(2) elements
 element SU2sum(const element &Ua, const element &Ub);
 
@@ -70,4 +67,6 @@ double Trace(const std::vector<element> &Ulist);
 // Returns the inverse of a given SU(2) element
 element reversedlink(const element &link);
 
+// Returns the maximum size of a wilson loop for a given lattice size
+int MaxWilsonloop(int L);
 #endif

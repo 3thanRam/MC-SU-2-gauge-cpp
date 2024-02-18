@@ -31,13 +31,12 @@ int site_array::conv4to1Index(std::array<int, 4> ix)
 // Translate single index to multi-index
 std::array<int, 4> site_array::conv1to4Index(int ix0)
 {
-    int ix = ix0;
-    int t = ix / intpow(L, 3);
-    ix %= intpow(L, 3);
-    int x = ix / intpow(L, 2);
-    ix %= L * L;
-    int y = ix / L;
-    ix %= L;
-    int z = ix;
+    int L2 = L * L;
+    int L3 = L2 * L;
+
+    int t = ix0 / L3;
+    int x = (ix0 % L3) / L2;
+    int y = (ix0 % L2) / L;
+    int z = ix0 % L;
     return {t, x, y, z};
 }

@@ -50,7 +50,7 @@ int main()
         std::cin >> Calc;
     }
 
-    int Iterations = 100;         // Number of iterations before asuming equilibrium
+    int Iterations = 50;          // Number of iterations before asuming equilibrium
     std::vector<int> Nlist;       // List of lattice sizes
     int N;                        // single lattice size
     double Beta = 2.3;            // single inverse temperture
@@ -82,7 +82,7 @@ int main()
             Graph2(Nlist[0], Iterations, Betavect);
             break;
         case '3':
-            Graph3(Nlist, Iterations, Beta);
+            Graph3(Nlist, Iterations, 3.0);
             break;
         case '4':
             Betavect = Rangevalues(0.1, 4, 20); // Large vector of inverse tempertures beta between 0.1 and 4

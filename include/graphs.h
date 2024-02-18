@@ -6,6 +6,7 @@ using json = nlohmann::json;
 void Saveas(json Jdata, std::string file_name);
 
 std::vector<double> Lattice_Plaqcalculation(int lattsize, int Ini_mode, int Iterations, double Beta);
+std::vector<double> Lattice_Wloopcalculation(int lattsize, int Ini_mode, int Iterations, double Beta);
 
 // Generate data for 1st figure: Average plaquette as a function of Number of iterations for several lattice sizes & fixed beta
 void Graph1(std::vector<int> Nlist, int Iterations, double Beta);

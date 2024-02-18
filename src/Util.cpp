@@ -31,7 +31,7 @@ double Random()
 // Returns either 0 or 1 with probabilities: param,1-param
 bool Choice(double proba1)
 {
-    return (1. - proba1) > unidistribution(generator);
+    return (1. - proba1) > Random();
 }
 
 /** returns random 1st value of link
@@ -45,7 +45,7 @@ double get_ao(double betak)
     {
         x = expo + Random() * (1. - expo);
         ao = 1. + (std::log(x) / betak);
-        if (!Choice(std::sqrt(1. - ao * ao))) // reject(1) with probability 1-sqrt(1-ao^2) <=> keep(0) with probability sqrt(1-ao^2)
+        if ((1. - std::sqrt(1. - ao * ao)) <= Random()) //(!Choice(std::sqrt(1. - ao * ao))) // reject(1) with probability 1-sqrt(1-ao^2) <=> keep(0) with probability sqrt(1-ao^2)
         {
             break;
         }
@@ -111,7 +111,7 @@ element SU2multSU2(const element &Ua, const element &Ub)
     return UProd;
 }
 
-// Returns prod of SU(2) times inverse of a second SU(2) element
+// Returns prod of SU(2) and inverse of a second SU(2) element
 element SU2multSU2dag(const element &Ua, const element &Ub)
 {
     element UProd;
@@ -120,6 +120,18 @@ element SU2multSU2dag(const element &Ua, const element &Ub)
     UProd[1] = -Ua[0] * Ub[1] + Ua[1] * Ub[0] + (Ua[2] * Ub[3] - Ua[3] * Ub[2]);
     UProd[2] = -Ua[0] * Ub[2] + Ua[2] * Ub[0] + (Ua[3] * Ub[1] - Ua[1] * Ub[3]);
     UProd[3] = -Ua[0] * Ub[3] + Ua[3] * Ub[0] + (Ua[1] * Ub[2] - Ua[2] * Ub[1]);
+    return UProd;
+}
+
+// Returns prod of inverse of a SU(2) element times and a second SU(2) element
+element SU2dagmultSU2(const element &Ua, const element &Ub)
+{
+    element UProd;
+
+    UProd[0] = Ua[0] * Ub[0] + (Ua[1] * Ub[1] + Ua[2] * Ub[2] + Ua[3] * Ub[3]);
+    UProd[1] = Ua[0] * Ub[1] - Ua[1] * Ub[0] + (Ua[2] * Ub[3] - Ua[3] * Ub[2]);
+    UProd[2] = Ua[0] * Ub[2] - Ua[2] * Ub[0] + (Ua[3] * Ub[1] - Ua[1] * Ub[3]);
+    UProd[3] = Ua[0] * Ub[3] - Ua[3] * Ub[0] + (Ua[1] * Ub[2] - Ua[2] * Ub[1]);
     return UProd;
 }
 
@@ -142,4 +154,29 @@ std::vector<double> randirectionvector(double length)
     double lsinphi = length * sqrt(1. - cosphi * cosphi);
 
     return {lsinphi * cos(theta), lsinphi * sin(theta), length * cosphi};
+}
+
+// Returns the maximum size of a wilson loop for a given lattice size
+int MaxWilsonloop(int L)
+{
+    int maxsizeloop;
+    switch (L)
+    {
+    case 2:
+        maxsizeloop = 2;
+        break;
+    case 4:
+        maxsizeloop = 3;
+        break;
+    case 6:
+        maxsizeloop = 5;
+        break;
+    case 8:
+        maxsizeloop = 6;
+        break;
+    case 10:
+        maxsizeloop = 6;
+        break;
+    }
+    return maxsizeloop;
 }

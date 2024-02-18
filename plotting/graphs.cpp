@@ -15,6 +15,14 @@ std::vector<double> Lattice_Plaqcalculation(int lattsize, int Ini_mode, int Iter
     return lattice.Avplaq_data;
 }
 
+std::vector<double> Lattice_Wloopcalculation(int lattsize, int Ini_mode, int Iterations, double Beta)
+{
+    Lattice lattice(lattsize, Ini_mode);
+    lattice.equilibrium(Iterations, Beta);
+    lattice.UpdateWloop_data();
+    return lattice.Wloop_data;
+}
+
 void Graph1(std::vector<int> Llist, int Iterations, double Beta)
 {
     json Jdata;
@@ -82,7 +90,6 @@ void Graph2(int L, int Iterations, std::vector<double> Betalist)
     Jdata["b"] = 0;
     Jdata["t"] = 1;
     Jdata["numbplots"] = Betalist.size();
-    std::vector<std::future<std::vector<double>>> futures;
 
     for (double beta : Betalist)
     {
@@ -109,6 +116,52 @@ void Graph2(int L, int Iterations, std::vector<double> Betalist)
 // Generate data for 3rd figure: Wilson loop as a function of lattice size for fixed beta
 void Graph3(std::vector<int> Llist, int Iterations, double Beta)
 {
+    int Nloops = 6;
+
+    std::vector<std::vector<double>> Latt_data(Nloops);
+    std::vector<std::vector<std::pair<int, double>>> datapts(Nloops);
+
+    json Jdata;
+
+    Jdata["Xlabel"] = "LATTICE SIZE";
+    Jdata["Ylabel"] = "WILSON LOOP";
+    std::string Beta_str = std::to_string(Beta);
+    Beta_str.erase(Beta_str.find_last_not_of('0') + 1, std::string::npos);
+    Beta_str.erase(Beta_str.find_last_not_of('.') + 1, std::string::npos);
+    Jdata["title"] = "Wilson loop as a function of\n lattice size\n fixed $\\beta$=" + Beta_str;
+    Jdata["b"] = 0;
+    Jdata["t"] = 1;
+
+    Jdata["numbplots"] = Nloops;
+    std::vector<std::string> graphinfo(Nloops);
+
+    std::cout << "Sorting datapoints" << std::endl;
+
+    for (int n = 0; n < Llist.size(); n++)
+    {
+        std::vector<double> LatticeL = Lattice_Wloopcalculation(Llist[n], 0, Iterations, Beta);
+        for (int l = 0; l < Nloops; l++)
+        {
+            Latt_data[l].emplace_back(LatticeL[l]);
+        }
+    }
+
+    for (int l = 0; l < Nloops; l++)
+    {
+        std::stringstream ginfo;
+        ginfo << l + 1 << "x" << l + 1;
+        graphinfo[l] = ginfo.str();
+        for (int n = 0; n < Llist.size(); n++)
+        {
+            if (l + 1 <= MaxWilsonloop(Llist[n]))
+            {
+                datapts[l].emplace_back(Llist[n], Latt_data[l][n]);
+            }
+        }
+    }
+    Jdata["graphinfo"] = graphinfo;
+    Jdata["plots"] = datapts;
+    Saveas(Jdata, "json_data3");
 }
 
 void Graph4(int L, int Iterations, std::vector<double> Betalist)

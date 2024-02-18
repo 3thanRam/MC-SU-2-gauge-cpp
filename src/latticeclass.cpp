@@ -3,7 +3,7 @@
 // Get the staple at a given site and direction
 element Lattice::Staple(int ix, int mu, int nu)
 {
-    std::array<int, 4> Uo4inds = a.conv1to4Index(ix);
+    std::array<int, 4> ixinds = a.conv1to4Index(ix);
 
     /*
      *                U2fw
@@ -22,31 +22,30 @@ element Lattice::Staple(int ix, int mu, int nu)
     // FORWARD (anti-clockwise) staple:
 
     // link starting at ix + mu with direction nu
-    std::array<int, 4> U1forw4inds = Uo4inds;
-    U1forw4inds[mu] = (U1forw4inds[mu] + 1) % L;
-    int forw1ix = a.conv4to1Index(U1forw4inds);
+    ixinds[mu] = (ixinds[mu] + 1) % L;
+    int forw1ix = a.conv4to1Index(ixinds);
+    ixinds[mu] = (ixinds[mu] - 1 + L) % L;
 
     // inverse of link starting at ix + nu with direction mu
-    std::array<int, 4> U2forw4inds = Uo4inds;
-    U2forw4inds[nu] = (U2forw4inds[nu] + 1) % L;
-    int forw2ix = a.conv4to1Index(U2forw4inds);
+    ixinds[nu] = (ixinds[nu] + 1) % L;
+    int forw2ix = a.conv4to1Index(ixinds);
+    ixinds[nu] = (ixinds[nu] - 1 + L) % L;
 
     // inverse of link starting at ix with direction nu
 
     // BACKWARD (clockwise) staple:
 
     // inverse of link starting at ix+mu-nu with direction mu
-    // reuse U1forw4inds since it has same mu index
-    U1forw4inds[nu] = (U1forw4inds[nu] - 1 + L) % L;
-    int bck1ix = a.conv4to1Index(U1forw4inds);
+    ixinds[nu] = (ixinds[nu] - 1 + L) % L;
+    ixinds[mu] = (ixinds[mu] + 1) % L;
+    int bck1ix = a.conv4to1Index(ixinds);
+    ixinds[mu] = (ixinds[mu] - 1 + L) % L; // only undo mu, reuse nu for next link
 
     // inverse of link starting at ix - nu with direction mu
-    std::array<int, 4> U2bc4inds = Uo4inds;
-    U2bc4inds[nu] = (U2bc4inds[nu] - 1 + L) % L;
-    int bck2ix = a.conv4to1Index(U2bc4inds);
+    int bck2ix = a.conv4to1Index(ixinds);
 
     // link starting at ix + mu with direction nu
-    // int bck3ix = bck2ix; same site as bck2ix
+    // int bck3ix = bck2ix; same site as bck2ix (but different direction)
 
     element forwStaple = SU2multSU2dag(a.U[forw1ix][nu], SU2multSU2(a.U[ix][nu], a.U[forw2ix][mu]));
     // element forwStaple = SU2multSU2dag(a.U[forw1ix]->at(nu), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
@@ -123,21 +122,23 @@ double Lattice::plaquette(int ix, int mu, int nu)
      *
      */
 
-    std::array<int, 4> Uo4inds = a.conv1to4Index(ix);
+    std::array<int, 4> ixinds = a.conv1to4Index(ix);
 
     // Uo: link starting at ix with direction mu
 
     // U1: link starting at ix + mu with direction nu
-    std::array<int, 4> U1forw4inds = Uo4inds;
-    U1forw4inds[mu] = (U1forw4inds[mu] + 1) % L;
-    int forw1ix = a.conv4to1Index(U1forw4inds);
+    ixinds[mu] = (ixinds[mu] + 1) % L;
+    int forw1ix = a.conv4to1Index(ixinds);
+    ixinds[mu] = (ixinds[mu] - 1 + L) % L;
 
     // U2: inverse of link starting at ix + nu with direction mu
-    std::array<int, 4> U2forw4inds = Uo4inds;
-    U2forw4inds[nu] = (U2forw4inds[nu] + 1) % L;
-    int forw2ix = a.conv4to1Index(U2forw4inds);
+    ixinds[nu] = (ixinds[nu] + 1) % L;
+    int forw2ix = a.conv4to1Index(ixinds);
+    ixinds[nu] = (ixinds[nu] - 1 + L) % L;
 
     // U3: inverse of link starting at ix with direction nu
+    // same site as U1 but different direction
+
     // element plaqprod = SU2multSU2dag(SU2multSU2(a.U[ix]->at(mu), a.U[forw1ix]->at(nu)), SU2multSU2(a.U[ix]->at(nu), a.U[forw2ix]->at(mu)));
     element plaqprod = SU2multSU2dag(SU2multSU2(a.U[ix][mu], a.U[forw1ix][nu]), SU2multSU2(a.U[ix][nu], a.U[forw2ix][mu]));
     return SU2Trace(plaqprod);
@@ -185,6 +186,101 @@ void Lattice::gaugeregenerate()
     for (auto &elem : g)
     {
         elem = get_ini_rand_elem();
+    }
+}
+
+double Lattice::Wilsonloop(int ix, int mu, int nu, int size)
+{
+    /*
+     *                               U2s
+     *      ix+size*nu  <===   ...  <===   ix+size*(nu+mu)
+     *      ||                               /\
+     *      ||                               ||
+     *      \/                               ||
+     *      ...                             ...
+     *      ||                               /\
+     *      ||U3s                            ||U1s
+     *      \/          U0s                  ||
+     *      ix          ===>   ...  ===>   ix+size*mu
+     *
+     */
+
+    // Uo
+    std::array<int, 4> ix0inds = a.conv1to4Index(ix);
+    ix0inds[mu] = (ix0inds[mu] - 1 + L) % L; // start from the site before to cancel first +1
+    element E0 = {1., 0., 0., 0.};
+    for (int s = 0; s < size; s++)
+    {
+        ix0inds[mu] = (ix0inds[mu] + 1) % L;
+        E0 = SU2multSU2(E0, a.U[a.conv4to1Index(ix0inds)][mu]);
+    }
+
+    // U1
+    std::array<int, 4> ix1inds = a.conv1to4Index(ix);
+    ix1inds[mu] = (ix1inds[mu] + size) % L;
+    ix1inds[nu] = (ix1inds[nu] - 1 + L) % L; // start from the site before to cancel first +1
+    element E1 = {1., 0., 0., 0.};
+    for (int s = 0; s < size; s++)
+    {
+        ix1inds[nu] = (ix1inds[nu] + 1) % L;
+        E1 = SU2multSU2(E1, a.U[a.conv4to1Index(ix1inds)][nu]);
+    }
+
+    // U2
+    std::array<int, 4> ix2inds = a.conv1to4Index(ix);
+    ix2inds[nu] = (ix2inds[nu] + size) % L;
+    // ix2inds[mu] = (ix2inds[mu] + size) % L;
+    ix2inds[mu] = (ix2inds[mu] - 1 + L) % L;
+    element E2 = {1., 0., 0., 0.};
+    for (int s = 0; s < size; s++)
+    {
+        ix2inds[mu] = (ix2inds[mu] + 1) % L;
+        // E2 = SU2multSU2(E2, a.U[a.conv4to1Index(ix2inds)][mu]);
+        E2 = SU2multSU2(E2, a.U[a.conv4to1Index(ix2inds)][mu]);
+    }
+
+    // U3
+    std::array<int, 4> ix3inds = a.conv1to4Index(ix);
+    // ix3inds[nu] = (ix3inds[nu] + size) % L;
+    ix3inds[nu] = (ix3inds[nu] - 1 + L) % L;
+    element E3 = {1., 0., 0., 0.};
+    for (int s = 0; s < size; s++)
+    {
+        ix3inds[nu] = (ix3inds[nu] + 1) % L;
+        // E3 = SU2multSU2(E3, a.U[a.conv4to1Index(ix3inds)][nu]);
+        E3 = SU2multSU2(E3, a.U[a.conv4to1Index(ix3inds)][nu]);
+    }
+
+    element loopProd = SU2multSU2dag(SU2multSU2(E0, E1), SU2multSU2(E3, E2));
+    return SU2Trace(loopProd);
+}
+
+double Lattice::AverageWilsonloop(int size)
+{
+    double Wl = 0.;
+    for (int ix = 0; ix < V; ix++)
+    {
+        for (int mu = 0; mu < 3; mu++)
+        {
+            for (int nu = mu + 1; nu < 4; nu++)
+            {
+                Wl += Wilsonloop(ix, mu, nu, size);
+            }
+        }
+    }
+    Wl /= (V * 6. * 2);
+    return Wl;
+}
+
+// Get expectation value of different sized wilson loops
+void Lattice::UpdateWloop_data()
+{
+    int maxsizeloop = MaxWilsonloop(L);
+    Wloop_data.reserve(maxsizeloop);
+    for (int i = 1; i <= maxsizeloop; i++)
+    {
+        Wloop_data.push_back(AverageWilsonloop(i));
+        std::cout << "Wilson loop " << i << " = " << Wloop_data[i - 1] << std::endl;
     }
 }
 

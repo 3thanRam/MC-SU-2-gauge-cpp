@@ -38,6 +38,14 @@ struct Lattice
     // Get average action from average plaquette
     double averageAction();
 
+    double Wilsonloop(int ix, int mu, int nu, int size);
+
+    // Get Average wilson loop of given size
+    double AverageWilsonloop(int size);
+
+    // Get expectation value of different sized wilson loops
+    void UpdateWloop_data();
+
     /** Touch a heatbath to each link variable to achieve equilibrium*/
     void heatbath(double Beta);
 
