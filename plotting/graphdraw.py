@@ -43,7 +43,7 @@ def Graph4stuff(ax,ax2,ax3,N,Imax,Beta_array,Ldata):
 def graph5(ax,N,Beta_array,Ldata):
     Xlabel='Loop size'
     Ylabel='Wilson loop'
-    title='Fig.4 Fit of Wilson loop as a function of \n loop sizes for different $\\beta$ \n & fixed N='+str(N)
+    title=' Fit of Wilson loop as a function of \n loop sizes for different $\\beta$ \n & fixed N='+str(N)
 
     Betalist=[1.9+0.2*b for b in range(4)]
     size_array=np.linspace(0,5,10**2)
@@ -53,7 +53,8 @@ def graph5(ax,N,Beta_array,Ldata):
         
         if beta<=2.1:
             Xfit=[0,1,2]
-            Yfit=[1.0]+[Ldata[l][beta_ind][1] for l in [1,2]]
+            Yfit=[1.0]+[Ldata[l-1][beta_ind][1] for l in [1,2]]
+            print(beta,Xfit,Yfit)
         else:
             Xfit=[si+1 for si in range(len(Ldata))]
             Yfit=[Ldata[l][beta_ind][1] for l in range(len(Ldata))]
@@ -85,11 +86,11 @@ def Graph6(ax,N,Imax,Beta_array,Ldata):
             Xfit=[si+1 for si in range(len(Ldata))]
             Yfit=[Ldata[l][beta_ind][1] for l in range(len(Ldata))]
         fitpts.append(curve_fit(fitfunc, Xfit, Yfit)[0][2])
-    Highbeta=Betalist[(Betalist>2.1)&(Betalist<5)]
-    lowbeta=Betalist[(Betalist>1.6)&(Betalist<1.8)]
+    #Highbeta=Betalist[(Betalist>2.1)&(Betalist<5)]
+    #lowbeta=Betalist[(Betalist>1.6)&(Betalist<1.8)]
 
     
-    ax.scatter(Betalist,fitpts,label='fit data',color='black')
+    ax.scatter(Betalist,fitpts,s=10,label='fit data',color='black')
 
 
     Beta_spaceS=np.linspace(10**-2,3.5,10**3)
@@ -148,7 +149,7 @@ def DRAW(Graphnumb):
             Nlist+=[xval for xval in xdata if xval not in Nlist]
         else:
             color=COLORS[p]
-        ax.plot(xdata,ydata,color=color,marker=marker,linestyle=linestyle,label=graphinfo)
+        ax.plot(xdata,ydata,color=color,marker=marker,ms=4,linestyle=linestyle,label=graphinfo)
     
     if Graphnumb==3:
         if bottom<=0:

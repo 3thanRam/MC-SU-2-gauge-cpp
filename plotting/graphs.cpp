@@ -166,4 +166,43 @@ void Graph3(std::vector<int> Llist, int Iterations, double Beta)
 
 void Graph4(int L, int Iterations, std::vector<double> Betalist)
 {
+    int Nloops = 5;
+
+    std::vector<std::vector<double>> Latt_data(Nloops);
+    std::vector<std::vector<std::pair<double, double>>> datapts(Nloops);
+
+    json Jdata;
+
+    Jdata["Xlabel"] = "$\\beta$";
+    Jdata["Ylabel"] = "WILSON LOOP";
+    Jdata["title"] = "Wilson loop as a function of $\\beta$";
+    Jdata["b"] = 0;
+    Jdata["t"] = 1;
+    Jdata["fixed"] = {L, Iterations};
+
+    Jdata["numbplots"] = Nloops;
+    std::vector<std::string> graphinfo(Nloops);
+
+    for (auto beta : Betalist)
+    {
+        std::vector<double> Latticeb = Lattice_Wloopcalculation(L, 0, Iterations, beta);
+        for (int l = 0; l < Nloops; l++)
+        {
+            Latt_data[l].emplace_back(Latticeb[l]);
+        }
+    }
+    std::cout << "Sorting datapoints" << std::endl;
+    for (int l = 0; l < Nloops; l++)
+    {
+        std::stringstream ginfo;
+        ginfo << l + 1 << "x" << l + 1;
+        graphinfo[l] = ginfo.str();
+        for (int b = 0; b < Betalist.size(); b++)
+        {
+            datapts[l].emplace_back(Betalist[b], Latt_data[l][b]);
+        }
+    }
+    Jdata["graphinfo"] = graphinfo;
+    Jdata["plots"] = datapts;
+    Saveas(Jdata, "json_data4");
 }
