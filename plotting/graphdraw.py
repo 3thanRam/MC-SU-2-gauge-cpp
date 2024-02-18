@@ -5,6 +5,11 @@ from scipy.optimize import curve_fit
 from matplotlib import rcParams
 import json
 import numpy as np
+import warnings
+from scipy.optimize import OptimizeWarning
+
+warnings.simplefilter("ignore", OptimizeWarning)
+
 COLORS=["red","blue","purple","orange","black","green"]
 Markers=[["x","o"],"x","o","o"]
 Linestyles=[["-","--"],"-","-","None"]
@@ -22,13 +27,13 @@ def Grsetup(ax,Xlabel,Ylabel,title,b,t):
     ax.legend()
 
 def fitfunc(s, A, B, C):
-    return np.clip(np.exp(-(A+B*s+C*s**2)), 0.001, 10) 
+    return np.clip(np.exp(-(A+B*s+C*s**2)),1e-3, 10) 
 def Weakcoupl(beta):
     C=(-6*np.pi**2)/11
-    return np.clip(np.exp(C*(beta-2)), 0.001, 10) 
+    return np.exp(C*(beta-2)) 
 
 def Strongcoupl(beta):
-    return np.clip(-np.log(beta/4), 0.001, 10) 
+    return -np.log(beta/4) 
 
 def Graph4stuff(ax,ax2,ax3,N,Imax,Beta_array,Ldata):
     Xspace1=np.linspace(0,2,10**2)
@@ -81,14 +86,11 @@ def Graph6(ax,N,Imax,Beta_array,Ldata):
         beta_ind=(np.abs(Beta_array - beta)).argmin()
         if beta<=2.1:
             Xfit=[0,1,2]
-            Yfit=[1.0]+[Ldata[l][beta_ind][1] for l in [1,2]]
+            Yfit=[1.0]+[Ldata[l-1][beta_ind][1] for l in [1,2]]
         else:
             Xfit=[si+1 for si in range(len(Ldata))]
             Yfit=[Ldata[l][beta_ind][1] for l in range(len(Ldata))]
         fitpts.append(curve_fit(fitfunc, Xfit, Yfit)[0][2])
-    #Highbeta=Betalist[(Betalist>2.1)&(Betalist<5)]
-    #lowbeta=Betalist[(Betalist>1.6)&(Betalist<1.8)]
-
     
     ax.scatter(Betalist,fitpts,s=10,label='fit data',color='black')
 
