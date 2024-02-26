@@ -13,6 +13,16 @@ void pythonplot(std::string whichgraph)
     Py_Finalize();
 }
 
+void pythonplot()
+{
+    const char *pdrawfile = "plotting/graphdraw.py";
+    FILE *file = fopen(pdrawfile, "r");
+    Py_Initialize();
+    PyRun_SimpleFile(file, pdrawfile);
+    PyRun_SimpleString("Otime()");
+    Py_Finalize();
+}
+
 // Returns vector filled with N values between a & b
 std::vector<double> Rangevalues(double a, double b, int N)
 {
@@ -28,10 +38,12 @@ std::vector<double> Rangevalues(double a, double b, int N)
 
 int main()
 {
+    std::ifstream f("input.json");
+    json jdata = json::parse(f);
+
     // Choose plot 1,2,3,4 (5 & 6 are plotted with 4) or run tests (T)
-    char graphNumb;
-    std::cout << "Choose which figure to plot 1,2,3,4,T: ";
-    std::cin >> graphNumb;
+    std::string graphNumbstr = jdata["graphNumb"];
+    const char graphNumb = *graphNumbstr.c_str();
 
     //"Plot saved(0) or  new data(1)"
     bool Calc;
@@ -39,37 +51,24 @@ int main()
     std::string cpath = std::filesystem::current_path();
     struct stat sb;                                                              // Structure which would store the metadata
     std::string datapath = cpath + "/graphdata/json_data" + graphNumb + ".json"; // Path to graphdata directory
-    // struct stat sb;                                                              // Structure which would store the metadata
-    if (stat((datapath).data(), &sb) != 0) // if the file doesn't exist then force calc=1
+    if (stat((datapath).data(), &sb) != 0)                                       // if the file doesn't exist then force calc=1
     {
         Calc = 1;
     }
     else
     {
-        std::cout << "Plot already saved data(0) or calculate new data & plot (1): ";
-        std::cin >> Calc;
+        // Plot already saved data(0) or calculate new data & plot (1)
+        Calc = jdata["Calc"];
     }
 
-    int Iterations = 50;          // Number of iterations before asuming equilibrium
-    std::vector<int> Nlist;       // List of lattice sizes
-    int N;                        // single lattice size
-    double Beta = 2.3;            // single inverse temperture
-    std::vector<double> Betavect; // List of inverse tempertures beta
+    int Iterations = jdata["numbIterations"]; // Number of iterations before asuming equilibrium
+    std::vector<int> Nlist = jdata["Lsizes"]; // List of lattice sizes
+    double Beta = jdata["Beta"];              // single inverse temperture
+    std::vector<double> Betavect;             // List of inverse tempertures beta
 
     if (Calc)
     {
-        int numIntegers = 1 * (graphNumb != 'T' && graphNumb != 'd');
-        if (graphNumb == '1' || graphNumb == '3')
-        {
-            std::cout << "Choose Number of Lattice sizes: ";
-            std::cin >> numIntegers;
-        }
-        for (int i = 0; i < numIntegers; ++i)
-        {
-            std::cout << "Input Lattice size: ";
-            std::cin >> N;
-            Nlist.push_back(N);
-        }
+
         std::cout << "Starting calculations" << std::endl;
         auto start = std::chrono::high_resolution_clock::now();
         switch (graphNumb)
@@ -92,6 +91,9 @@ int main()
             gauge_test(Beta);
             heatbath_test(Beta);
             break;
+        case 't':
+            time_complexity(Beta);
+            break;
         default:
             Lattice_Plaqcalculation(8, 0, Iterations, Beta);
             break;
@@ -107,6 +109,10 @@ int main()
     {
         std::string graphnumbstr(1, graphNumb);
         pythonplot(graphnumbstr);
+    }
+    else if (graphNumb == 't')
+    {
+        pythonplot();
     }
 
     return 0;

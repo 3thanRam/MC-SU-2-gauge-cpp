@@ -19,8 +19,16 @@ std::vector<double> Lattice_Wloopcalculation(int lattsize, int Ini_mode, int Ite
 {
     Lattice lattice(lattsize, Ini_mode);
     lattice.equilibrium(Iterations, Beta);
-    lattice.UpdateWloop_data();
+    lattice.UpdateWloop_data(Beta);
     return lattice.Wloop_data;
+}
+
+std::pair<std::vector<double>, std::vector<std::pair<double, double>>> Lattice_Wloop_extra(int lattsize, int Ini_mode, int Iterations, double Beta)
+{
+    Lattice lattice(lattsize, Ini_mode);
+    lattice.equilibrium(Iterations, Beta);
+    lattice.UpdateWloop_data(Beta);
+    return std::make_pair(lattice.Wloop_data, lattice.minmaxWloop);
 }
 
 void Graph1(std::vector<int> Llist, int Iterations, double Beta)
@@ -118,8 +126,10 @@ void Graph3(std::vector<int> Llist, int Iterations, double Beta)
 {
     int Nloops = 6;
 
-    std::vector<std::vector<double>> Latt_data(Nloops);
-    std::vector<std::vector<std::pair<int, double>>> datapts(Nloops);
+    std::vector<std::vector<std::tuple<double, double, double>>> Latt_data(Nloops);
+    std::vector<std::vector<std::tuple<int, double, double, double>>> datapts(Nloops);
+
+    // std::vector<std::vector<std::pair<int, double>>> datapts(Nloops);
 
     json Jdata;
 
@@ -139,10 +149,11 @@ void Graph3(std::vector<int> Llist, int Iterations, double Beta)
 
     for (int n = 0; n < Llist.size(); n++)
     {
-        std::vector<double> LatticeL = Lattice_Wloopcalculation(Llist[n], 0, Iterations, Beta);
+        // std::vector<double> Wn = Lattice_Wloopcalculation(Llist[n], 0, Iterations, Beta);
+        auto [Wn, minmaxErrorData] = Lattice_Wloop_extra(Llist[n], 0, Iterations, Beta);
         for (int l = 0; l < Nloops; l++)
         {
-            Latt_data[l].emplace_back(LatticeL[l]);
+            Latt_data[l].emplace_back(Wn[l], minmaxErrorData[l].first, minmaxErrorData[l].second);
         }
     }
 
@@ -155,8 +166,12 @@ void Graph3(std::vector<int> Llist, int Iterations, double Beta)
         {
             if (l + 1 <= MaxWilsonloop(Llist[n]))
             {
-                datapts[l].emplace_back(Llist[n], Latt_data[l][n]);
+                datapts[l].emplace_back(Llist[n], std::get<0>(Latt_data[l][n]), std::get<1>(Latt_data[l][n]), std::get<2>(Latt_data[l][n]));
             }
+            // for (int i = 0; i < datapts[l].size(); i++)
+            //{
+            //     std::cout << std::get<0>(datapts[l][i]) << " " << std::get<1>(datapts[l][i]) << " " << std::get<2>(datapts[l][i]) << " " << std::get<3>(datapts[l][i]) << std::endl;
+            // }
         }
     }
     Jdata["graphinfo"] = graphinfo;
@@ -205,4 +220,25 @@ void Graph4(int L, int Iterations, std::vector<double> Betalist)
     Jdata["graphinfo"] = graphinfo;
     Jdata["plots"] = datapts;
     Saveas(Jdata, "json_data4");
+}
+
+void time_complexity(double Beta)
+{
+    json Jdata;
+
+    std::vector<double> times;
+    const int N[5] = {2, 4, 6, 8, 10};
+    for (auto n : N)
+    {
+        std::cout << "N = " << n << std::endl;
+        auto start = std::chrono::high_resolution_clock::now();
+        Lattice_Plaqcalculation(n, 0, 30, Beta);
+        auto finish = std::chrono::high_resolution_clock::now();
+        double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+        times.push_back(elapsed);
+        std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
+    }
+    Jdata["Lsizes"] = N;
+    Jdata["Ltimes"] = times;
+    Saveas(Jdata, "json_datatime");
 }

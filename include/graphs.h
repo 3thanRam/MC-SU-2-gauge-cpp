@@ -20,4 +20,6 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta);
  * Cutof squared times string tension as a function of beta in Strong & weak coupling limits
  * */
 void Graph4(int Nsize, int Iterations, std::vector<double> Betalist);
+
+void time_complexity(double Beta);
 #endif

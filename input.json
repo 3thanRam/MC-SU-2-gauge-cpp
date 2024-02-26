@@ -1,0 +1,13 @@
+{
+    "numbIterations": 50,
+    "Lsizes": [
+        2,
+        4,
+        6,
+        8,
+        10
+    ],
+    "graphNumb": "3",
+    "Calc": true,
+    "Beta": 2.3
+}

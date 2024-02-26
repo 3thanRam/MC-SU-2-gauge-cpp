@@ -273,14 +273,33 @@ double Lattice::AverageWilsonloop(int size)
 }
 
 // Get expectation value of different sized wilson loops
-void Lattice::UpdateWloop_data()
+void Lattice::UpdateWloop_data(double Beta)
 {
     int maxsizeloop = MaxWilsonloop(L);
-    Wloop_data.reserve(maxsizeloop);
-    for (int i = 1; i <= maxsizeloop; i++)
+    Wloop_data.resize(maxsizeloop, 0.0);
+    minmaxWloop.resize(maxsizeloop, {1e2, -1e2});
+
+    uint avWilson = 10;
+    std::vector<double> AvSq(maxsizeloop, 0.0);
+    std::vector<double> Var(maxsizeloop, 0.0);
+    for (uint av = 0; av < avWilson; av++)
     {
-        Wloop_data.push_back(AverageWilsonloop(i));
-        std::cout << "Wilson loop " << i << " = " << Wloop_data[i - 1] << std::endl;
+        for (int i = 0; i < maxsizeloop; i++)
+        {
+            double Wi = AverageWilsonloop(i + 1);
+            // Wl_data[av][i] = Wi;
+            Wloop_data[i] += Wi;
+            AvSq[i] += Wi * Wi;
+        }
+        heatbath(Beta);
+    }
+    for (int i = 0; i < maxsizeloop; i++)
+    {
+        Wloop_data[i] /= avWilson;
+        AvSq[i] /= avWilson;
+        Var[i] = AvSq[i] - Wloop_data[i] * Wloop_data[i];
+        minmaxWloop[i].first = sqrt(Var[i] / avWilson);
+        minmaxWloop[i].second = sqrt(Var[i] / avWilson);
     }
 }
 
