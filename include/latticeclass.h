@@ -12,7 +12,7 @@ struct Lattice
     std::vector<element> g;                             // list of group elements associated with each site in order to perfom gauge transformations
     std::vector<double> Avplaq_data;                    // vector of Average plaquette at each iteration
     std::vector<double> Wloop_data;                     // vector of expectation value of different sized wilson loops
-    std::vector<std::pair<double, double>> minmaxWloop; // vector of min and max values of wilson loops
+    std::vector<double> minmaxWloop; // vector of min and max values of wilson loops
     Lattice() : L(0){};
     Lattice(int Lattice_length_set, bool ini_cond_set)
         : L(Lattice_length_set),

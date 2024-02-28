@@ -69,4 +69,6 @@ element reversedlink(const element &link);
 
 // Returns the maximum size of a wilson loop for a given lattice size
 int MaxWilsonloop(int L);
+
+int nearestElemInd(double val, const std::vector<double> &vec); 
 #endif

@@ -277,7 +277,7 @@ void Lattice::UpdateWloop_data(double Beta)
 {
     int maxsizeloop = MaxWilsonloop(L);
     Wloop_data.resize(maxsizeloop, 0.0);
-    minmaxWloop.resize(maxsizeloop, {1e2, -1e2});
+    minmaxWloop.resize(maxsizeloop, 1e2);
 
     uint avWilson = 10;
     std::vector<double> AvSq(maxsizeloop, 0.0);
@@ -298,8 +298,7 @@ void Lattice::UpdateWloop_data(double Beta)
         Wloop_data[i] /= avWilson;
         AvSq[i] /= avWilson;
         Var[i] = AvSq[i] - Wloop_data[i] * Wloop_data[i];
-        minmaxWloop[i].first = sqrt(Var[i] / avWilson);
-        minmaxWloop[i].second = sqrt(Var[i] / avWilson);
+        minmaxWloop[i] = sqrt(Var[i] / avWilson);
     }
 }
 

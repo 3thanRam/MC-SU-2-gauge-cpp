@@ -21,5 +21,8 @@ void Graph3(std::vector<int> Nlist, int Iterations, double Beta);
  * */
 void Graph4(int Nsize, int Iterations, std::vector<double> Betalist);
 
+void Graph5(int L, int Iterations, std::vector<double> Betalist);
+void Graph6(int L, int Iterations, std::vector<double> Betalist);
+
 void time_complexity(double Beta);
 #endif

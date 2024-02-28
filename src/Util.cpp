@@ -180,3 +180,18 @@ int MaxWilsonloop(int L)
     }
     return maxsizeloop;
 }
+
+int nearestElemInd(double val, const std::vector<double> &vec)
+{
+    int ind = 0;
+    double min = std::abs(val - vec[0]);
+    for (int i = 1; i < vec.size(); i++)
+    {
+        if (std::abs(val - vec[i]) < min)
+        {
+            min = std::abs(val - vec[i]);
+            ind = i;
+        }
+    }
+    return ind;
+}
