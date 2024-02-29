@@ -14,15 +14,8 @@ struct Data
     const double *w; // Weights
 };
 
-// Define the second-order polynomial function
 
-double polynomialFitFunction(double x, const double *params);
-
-// Define the GSL fitting function
-int fitFunction(const gsl_vector *params, void *data, gsl_vector *f);
-
-std::vector<double> fitWeightedSecondOrderPolynomial(const std::vector<double> &Xdata,
+std::pair<std::vector<double>,std::vector<double>> fitWeightedSecondOrderPolynomial(const std::vector<double> &Xdata,
                                                      const std::vector<double> &Ydata,
                                                      const std::vector<double> &weights);
-std::tuple<double, double, double> fitdata(std::vector<int> Xdata, std::vector<double> Ydata);
 #endif

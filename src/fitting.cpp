@@ -1,15 +1,19 @@
 #include "../include/fitting.h"
 
 // Function to perform the weighted fit and return the coefficients
-std::vector<double> fitWeightedSecondOrderPolynomial(const std::vector<double> &Xdata,
-                                                     const std::vector<double> &Ydata,
-                                                     const std::vector<double> &weights)
+std::pair<std::vector<double>, std::vector<double>> fitWeightedSecondOrderPolynomial(const std::vector<double> &Xdata,
+                                                                                     const std::vector<double> &Ydata,
+                                                                                     const std::vector<double> &weights)
 {
     double chisq;
     size_t n = Xdata.size();
     std::vector<double> xVec(Xdata.begin(), Xdata.end());
     std::vector<double> yVec(Ydata.begin(), Ydata.end());
     std::vector<double> wVec(weights.begin(), weights.end());
+    for (size_t i = 0; i < n; i++)
+    {
+        std::cout << "X: " << xVec[i] << " Y: " << yVec[i] << " W: " << wVec[i] << std::endl; 
+    }
     Data data = {n, xVec.data(), yVec.data(), wVec.data()};
 
     // Create gsl_vector instances
@@ -39,13 +43,20 @@ std::vector<double> fitWeightedSecondOrderPolynomial(const std::vector<double> &
     //  Perform the weighted linear fit
     gsl_multifit_wlinear(X, W, Y, c, cov, &chisq, workspace);
 
-
     //  Get the results
-    double bestFitParams[3];
-    bestFitParams[0] = gsl_vector_get(c, 0);
-    bestFitParams[1] = gsl_vector_get(c, 1);
-    bestFitParams[2] = gsl_vector_get(c, 2);
+    std::vector<double> bestFitParams = {gsl_vector_get(c, 0), gsl_vector_get(c, 1), gsl_vector_get(c, 2)};
+    // Calculate errors from the covariance matrix
+    double diag_cov_0 = gsl_matrix_get(cov, 0, 0);
+    double diag_cov_1 = gsl_matrix_get(cov, 1, 1);
+    double diag_cov_2 = gsl_matrix_get(cov, 2, 2);
 
+    std::vector<double> errors = {
+        std::sqrt(diag_cov_0),
+        std::sqrt(diag_cov_1),
+        std::sqrt(diag_cov_2)};
+
+    std::cout << "Best fit parameters: " << bestFitParams[0] << " " << bestFitParams[1] << " " << bestFitParams[2] << std::endl;
+    std::cout << "Errors: " << errors[0] << " " << errors[1] << " " << errors[2] << std::endl;
     //  Clean up
     gsl_multifit_linear_free(workspace);
     gsl_vector_free(c);
@@ -54,5 +65,5 @@ std::vector<double> fitWeightedSecondOrderPolynomial(const std::vector<double> &
     gsl_matrix_free(cov);
     gsl_matrix_free(X);
 
-    return {bestFitParams[0], bestFitParams[1], bestFitParams[2]};
+    return std::make_pair(bestFitParams, errors);
 }

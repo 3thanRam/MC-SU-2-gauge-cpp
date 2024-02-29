@@ -422,76 +422,21 @@ void drawfig4()
     pclose(g);
 }
 
-std::vector<double> gauss(std::vector<std::vector<double>> &A, std::vector<double> &B)
-{
-    int N = A.size();
 
-    for (int i = 0; i < N; i++)
-    {
-        // Make the diagonal element 1
-        double divisor = A[i][i];
-        for (int j = i; j < N; j++)
-        {
-            A[i][j] /= divisor;
-        }
-        B[i] /= divisor;
-
-        // Eliminate other rows
-        for (int k = 0; k < N; k++)
-        {
-            if (k != i)
-            {
-                double factor = A[k][i];
-                for (int j = i; j < N; j++)
-                {
-                    A[k][j] -= factor * A[i][j];
-                }
-                B[k] -= factor * B[i];
-            }
-        }
-    }
-
-    return B;
-}
-
-std::tuple<double, double, double> polyfit(std::vector<int> Xdata, std::vector<double> Ydata, int order)
-{
-    int N = Xdata.size();
-    int M = order + 1;
-    std::vector<std::vector<double>> A(M, std::vector<double>(M, 0));
-    std::vector<double> B(M, 0);
-    for (int i = 0; i < M; i++)
-    {
-        for (int j = 0; j < M; j++)
-        {
-            for (int k = 0; k < N; k++)
-            {
-                A[i][j] += pow(Xdata[k], i + j);
-            }
-        }
-    }
-    for (int i = 0; i < M; i++)
-    {
-        for (int k = 0; k < N; k++)
-        {
-            B[i] += Ydata[k] * pow(Xdata[k], i);
-        }
-    }
-    std::vector<double> coefs = gauss(A, B);
-    return std::make_tuple(coefs[0], coefs[1], coefs[2]);
-}
 
 // fit -log(Y) = A + B * X + C * X^2
-std::vector<double> fitWilsonloop(std::vector<double> Xdata, std::vector<double> Ydata, std::vector<double> Errors)
+std::pair<std::vector<double>, std::vector<double>> fitWilsonloop(std::vector<double> Xdata, std::vector<double> Ydata, std::vector<double> Errors)
 {
-    std::vector<double> logYdata;
+    std::vector<double> logYdata, logErrors;
     // double A, B, C;
-    for (auto y : Ydata)
+    //for (auto y : Ydata)
+    for (int i = 0; i < Ydata.size(); i++)
     {
-        logYdata.push_back(-log(y));
+        logYdata.push_back(-log(Ydata[i]));
+        logErrors.push_back(-log(Errors[i]));
     }
 
-    return fitWeightedSecondOrderPolynomial(Xdata, logYdata, Errors);
+    return fitWeightedSecondOrderPolynomial(Xdata, logYdata, logErrors);
 }
 void savefig5(int L, int Iterations, std::vector<double> Betalist)
 {
@@ -554,7 +499,7 @@ void savefig5(int L, int Iterations, std::vector<double> Betalist)
     {
         for (int l = 0; l < Nloops; l++)
         {
-            StdDev[l].push_back(sqrt((Latt_sqdata[l][b] - (Latt_data[l][b] * Latt_data[l][b]))));
+            StdDev[l].push_back(sqrt((Latt_sqdata[l][b] - (Latt_data[l][b] * Latt_data[l][b]))/Nav));
         }
     }
 
@@ -605,14 +550,15 @@ void savefig5(int L, int Iterations, std::vector<double> Betalist)
         if (betafitvals[b] <= 2.1)
         {
             //-log(W=0)=A=0
-            //-log(W=1)=B+C  -log(W=2)=2B+4C 
-            double C=log(Latticefitvals[1])-0.5*log(Latticefitvals[2]);
-            double B=-log(Latticefitvals[1])-C;
-            abccoefs = {0,B,C};
+            //-log(W=1)=B+C  -log(W=2)=2B+4C
+            double C = log(Latticefitvals[1]) - 0.5 * log(Latticefitvals[2]);
+            double B = -log(Latticefitvals[1]) - C;
+            abccoefs = {0, B, C};
         }
         else
         {
-            abccoefs = fitWilsonloop(Loopsidefitvals, Latticefitvals, stdDeviation);
+            auto result = fitWilsonloop(Loopsidefitvals, Latticefitvals, stdDeviation);
+            abccoefs = result.first;
         }
         fitcoefs[b] = abccoefs;
         if (b < Nfitvals - 1) // if not last block
@@ -689,7 +635,7 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
     Jdata["numbplots"] = Nloops;
     std::vector<std::string> graphinfo(1);
 
-    int Nav = 5;
+    
 
     std::cout << "Sorting datapoints" << std::endl;
     std::vector<std::vector<double>> fitcoefs(Betalist.size());
@@ -703,9 +649,16 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
     datFile << "# " << graphinfo[0] << "\n";
     for (int b = 0; b < Betalist.size(); b++)
     {
+        int Nav = 5;
+        if (Betalist[b] >= 2.1)
+        {
+            Nav = 10;
+        }
+
         std::vector<double> Latt_data(Nloops);
         std::vector<double> Latt_sqdata(Nloops);
         std::vector<double> StdDev(Nloops);
+        std::cout << "beta: " << Betalist[b] << std::endl;
         for (int n = 0; n < Nav; n++)
         {
             std::vector<double> Latticeb = Lattice_Wloopcalculation(L, 0, Iterations, Betalist[b]);
@@ -717,7 +670,7 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
         }
         for (int l = 0; l < Nloops; l++)
         {
-            StdDev[l] = sqrt((Latt_sqdata[l] - (Latt_data[l] * Latt_data[l])));
+            StdDev[l] = sqrt((Latt_sqdata[l] - (Latt_data[l] * Latt_data[l]))/Nav);
         }
         std::vector<double> Loopsidefitvals;
         std::vector<double> Latticefitvals;
@@ -742,7 +695,7 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
         }
         else
         {
-            Loopsidefitvals = {1, 2, 3, 4, 5};
+            Loopsidefitvals = {1, 2, 3, 4};
             // for (auto ls : Loopsidefitvals)
             for (int ls = 0; ls < Loopsidefitvals.size(); ls++)
             {
@@ -750,32 +703,48 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
                 Latticefitvals.push_back(Latt_data[ls]);
             }
         }
-        std::vector<double> Errors;
-        for (int l = 0; l < Loopsidefitvals.size(); l++)
-        {
-            Errors.push_back(1.0);
-        }
+        //std::vector<double> Errors;
+        //for (int l = 0; l < Loopsidefitvals.size(); l++)
+        //{
+        //    Errors.push_back(1.0);
+        //}
         std::vector<double> abccoefs;
+        std::vector<double> coefErrors = {0, 0, 0};
         // fit W=exp(-( a+ b*S + c*S^2))
         if (Betalist[b] <= 1.6)
         {
             abccoefs = {0, 0, -log(Latticefitvals[1])}; // C term dominates
+
+            double dCdW = -1.0 / Latticefitvals[1];  // Partial derivative of C with respect to W
+            coefErrors[2]= abs(dCdW)*StdDev[1];
         }
         else if (Betalist[b] <= 2.1)
         {
             //-log(W=0)=A=0
-            //-log(W=1)=B+C  -log(W=2)=2B+4C 
-            double C=log(Latticefitvals[1])-0.5*log(Latticefitvals[2]);
-            double B=-log(Latticefitvals[1])-C;
-            abccoefs = {0,B,C};
+            //-log(W=1)=B+C  -log(W=2)=2B+4C
+            double C = log(Latticefitvals[1]) - 0.5 * log(Latticefitvals[2]);
+            double B = -log(Latticefitvals[1]) - C;
+            abccoefs = {0, B, C};
+            // Estimate errors based on error propagation
+            //double dCdB = 0.5 / Latticefitvals[1];
+            double dCdC = -0.5 / Latticefitvals[2];
+
+            //double errorA = sqrt(dCdB * dCdB * StdDev[0] * StdDev[0] + dCdC * dCdC * StdDev[1] * StdDev[1]);
+            //double errorB = sqrt(dCdB * dCdB * StdDev[0] * StdDev[0]);
+            coefErrors[2]=sqrt(dCdC * dCdC * StdDev[1] * StdDev[1]); //assuming that the errors on Latticefitvals[1] and Latticefitvals[2] are independent
         }
         else
         {
-            
-            abccoefs = fitWilsonloop(Loopsidefitvals, Latticefitvals, Errors);
+
+            auto result = fitWilsonloop(Loopsidefitvals, Latticefitvals, stdDeviation);
+            abccoefs = result.first;
+            coefErrors = result.second;
         }
+        std::cout << "abccoefs: " << abccoefs[0] << " " << abccoefs[1] << " " <<abccoefs[2] << " " << std::endl;
+        std::cout << "coefErrors: " << coefErrors[0] << " " << coefErrors[1] << " " <<coefErrors[2] << " " << std::endl;
+
         fitcoefs[b] = abccoefs;
-        datFile << Betalist[b] << " " << abccoefs[2] << " " << 0 << "\n";
+        datFile << Betalist[b] << " " << abccoefs[2] << " " << coefErrors[2] << "\n";
     }
     datFile.close();
     Jdata["graphinfo"] = graphinfo;

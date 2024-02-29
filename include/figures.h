@@ -28,7 +28,7 @@ void drawfig4();
 
 std::vector<double> gauss(std::vector<std::vector<double>> &A, std::vector<double> &B);
 std::tuple<double, double, double> polyfit(std::vector<int> Xdata, std::vector<double> Ydata, int order);
-std::vector<double> fitWilsonloop(std::vector<double> Xdata, std::vector<double> Ydata, std::vector<double> Errors);
+std::pair<std::vector<double>,std::vector<double>> fitWilsonloop(std::vector<double> Xdata, std::vector<double> Ydata, std::vector<double> Errors);
 void savefig5(int L, int Iterations, std::vector<double> Betalist);
 void drawfig5();
 
