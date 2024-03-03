@@ -62,11 +62,14 @@ void savefig1(std::vector<int> Llist, int Iterations, double Beta)
     std::string cpath = std::filesystem::current_path();
     std::string path = cpath + "/graphdata";
     std::ofstream datFile(path + "/fig1.dat");
+
+    std::vector<std::pair<int, int>> params(Np);
     for (int Ini_mode = 0; Ini_mode < Nmode; Ini_mode++)
     {
         for (uint n = 0; n < Llist.size(); n++)
         {
             std::stringstream ginfo;
+            params[Ini_mode * Llist.size() + n] = std::make_pair(Ini_mode, Llist[n]);
             ginfo << "V=" << Llist[n] << "^4 Inimode:" << Ini_mode;
             graphinfo[Ini_mode * Llist.size() + n] = ginfo.str();
             datFile << "# " << graphinfo[Ini_mode * Llist.size() + n] << "\n";
@@ -81,6 +84,7 @@ void savefig1(std::vector<int> Llist, int Iterations, double Beta)
         }
     }
     datFile.close();
+    Jdata["params"] = params;
     Jdata["graphinfo"] = graphinfo;
     std::cout << "Saving data" << std::endl;
     Saveas(Jdata, "json_data1");
@@ -102,18 +106,25 @@ void drawfig1()
     fprintf(g, "set ylabel \"%s\"\n", data["Ylabel"].get<std::string>().c_str());
 
     int plotcount = 0;
-    for (const auto &info : data["graphinfo"])
+    // Jdata["Inimodes"] = Inimodes;
+    // for (const auto &info : data["graphinfo"])
+    for (int i = 0; i < data["numbplots"]; i++)
     {
-        std::string figtitle = info.get<std::string>();
-        char inicondchar = figtitle[14];
-        int inicond = inicondchar - '0';
+        std::string figtitle = data["graphinfo"][i].get<std::string>();
+        // std::string figtitle = info.get<std::string>();
+        auto params = data["params"][i];
+        int inicond = params[0];
+        int L = params[1];
+        // char inicondchar = figtitle[14];
+        // int inicond = inicondchar - '0';
+        std::cout << figtitle << " : " << plotcount << " ; " << inicond << " ; " << colors[L / 2] << " ; " << dashtype[inicond] << std::endl;
         if (plotcount == 0)
         {
-            fprintf(g, "plot 'graphdata/fig1.dat' index %d using 1:2 lt rgb  \"%s\" dashtype \"%s\" with lines title \"%s\"", plotcount, colors[plotcount / 2], dashtype[inicond], figtitle.c_str());
+            fprintf(g, "plot 'graphdata/fig1.dat' index %d using 1:2 lt rgb  \"%s\" dashtype \"%s\" with lines title \"%s\"", plotcount, colors[L / 2], dashtype[inicond], figtitle.c_str());
         }
         else
         {
-            fprintf(g, ", '' index %d using 1:2 lt rgb  \"%s\" dashtype \"%s\" with lines title \"%s\"", plotcount, colors[plotcount / 2], dashtype[inicond], figtitle.c_str());
+            fprintf(g, ", '' index %d using 1:2 lt rgb  \"%s\" dashtype \"%s\" with lines title \"%s\"", plotcount, colors[L / 2], dashtype[inicond], figtitle.c_str());
         }
         plotcount++;
     }
@@ -333,7 +344,7 @@ void savefig4(int L, int Iterations, std::vector<double> Betalist)
 
     Jdata["Xlabel"] = "β";
     Jdata["Ylabel"] = "WILSON LOOP";
-    Jdata["title"] = "Wilson loop as a function of β ";
+    Jdata["title"] = "Wilson loop as a function of β \\n for fixed lattice size L=" + std::to_string(L);
     Jdata["b"] = 0;
     Jdata["t"] = 1;
     Jdata["fixed"] = {L, Iterations};
@@ -422,14 +433,12 @@ void drawfig4()
     pclose(g);
 }
 
-
-
 // fit -log(Y) = A + B * X + C * X^2
 std::pair<std::vector<double>, std::vector<double>> fitWilsonloop(std::vector<double> Xdata, std::vector<double> Ydata, std::vector<double> Errors)
 {
     std::vector<double> logYdata, logErrors;
     // double A, B, C;
-    //for (auto y : Ydata)
+    // for (auto y : Ydata)
     for (int i = 0; i < Ydata.size(); i++)
     {
         logYdata.push_back(-log(Ydata[i]));
@@ -473,7 +482,7 @@ void savefig5(int L, int Iterations, std::vector<double> Betalist)
 
     Jdata["Xlabel"] = "LOOP SIDE";
     Jdata["Ylabel"] = "WILSON LOOP";
-    Jdata["title"] = "Fit of Wilson loop as a function of the loop side \\n from dependence on β";
+    Jdata["title"] = "Fit of Wilson loop as a function of the loop side \\n from dependence on β \\n for fixed lattice size L=" + std::to_string(L);
     Jdata["b"] = 0;
     Jdata["t"] = 1;
     Jdata["fixed"] = {L, Iterations};
@@ -499,7 +508,7 @@ void savefig5(int L, int Iterations, std::vector<double> Betalist)
     {
         for (int l = 0; l < Nloops; l++)
         {
-            StdDev[l].push_back(sqrt((Latt_sqdata[l][b] - (Latt_data[l][b] * Latt_data[l][b]))/Nav));
+            StdDev[l].push_back(sqrt((Latt_sqdata[l][b] - (Latt_data[l][b] * Latt_data[l][b])) / Nav));
         }
     }
 
@@ -627,15 +636,13 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
 
     Jdata["Xlabel"] = "β";
     Jdata["Ylabel"] = "a^2k";
-    Jdata["title"] = "Cutof squared times string tension \\n as a function of β in \\n Strong & weak coupling limits";
+    Jdata["title"] = "Cutof squared times string tension \\n as a function of β in \\n Strong & weak coupling limits \\n for fixed lattice size L=" + std::to_string(L);
     Jdata["b"] = 0;
     Jdata["t"] = 10;
     Jdata["fixed"] = {L, Iterations};
 
     Jdata["numbplots"] = Nloops;
     std::vector<std::string> graphinfo(1);
-
-    
 
     std::cout << "Sorting datapoints" << std::endl;
     std::vector<std::vector<double>> fitcoefs(Betalist.size());
@@ -670,7 +677,7 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
         }
         for (int l = 0; l < Nloops; l++)
         {
-            StdDev[l] = sqrt((Latt_sqdata[l] - (Latt_data[l] * Latt_data[l]))/Nav);
+            StdDev[l] = sqrt((Latt_sqdata[l] - (Latt_data[l] * Latt_data[l])) / Nav);
         }
         std::vector<double> Loopsidefitvals;
         std::vector<double> Latticefitvals;
@@ -703,11 +710,11 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
                 Latticefitvals.push_back(Latt_data[ls]);
             }
         }
-        //std::vector<double> Errors;
-        //for (int l = 0; l < Loopsidefitvals.size(); l++)
+        // std::vector<double> Errors;
+        // for (int l = 0; l < Loopsidefitvals.size(); l++)
         //{
-        //    Errors.push_back(1.0);
-        //}
+        //     Errors.push_back(1.0);
+        // }
         std::vector<double> abccoefs;
         std::vector<double> coefErrors = {0, 0, 0};
         // fit W=exp(-( a+ b*S + c*S^2))
@@ -715,8 +722,8 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
         {
             abccoefs = {0, 0, -log(Latticefitvals[1])}; // C term dominates
 
-            double dCdW = -1.0 / Latticefitvals[1];  // Partial derivative of C with respect to W
-            coefErrors[2]= abs(dCdW)*StdDev[1];
+            double dCdW = -1.0 / Latticefitvals[1]; // Partial derivative of C with respect to W
+            coefErrors[2] = abs(dCdW) * StdDev[1];
         }
         else if (Betalist[b] <= 2.1)
         {
@@ -726,12 +733,12 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
             double B = -log(Latticefitvals[1]) - C;
             abccoefs = {0, B, C};
             // Estimate errors based on error propagation
-            //double dCdB = 0.5 / Latticefitvals[1];
+            // double dCdB = 0.5 / Latticefitvals[1];
             double dCdC = -0.5 / Latticefitvals[2];
 
-            //double errorA = sqrt(dCdB * dCdB * StdDev[0] * StdDev[0] + dCdC * dCdC * StdDev[1] * StdDev[1]);
-            //double errorB = sqrt(dCdB * dCdB * StdDev[0] * StdDev[0]);
-            coefErrors[2]=sqrt(dCdC * dCdC * StdDev[1] * StdDev[1]); //assuming that the errors on Latticefitvals[1] and Latticefitvals[2] are independent
+            // double errorA = sqrt(dCdB * dCdB * StdDev[0] * StdDev[0] + dCdC * dCdC * StdDev[1] * StdDev[1]);
+            // double errorB = sqrt(dCdB * dCdB * StdDev[0] * StdDev[0]);
+            coefErrors[2] = sqrt(dCdC * dCdC * StdDev[1] * StdDev[1]); // assuming that the errors on Latticefitvals[1] and Latticefitvals[2] are independent
         }
         else
         {
@@ -740,8 +747,8 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
             abccoefs = result.first;
             coefErrors = result.second;
         }
-        std::cout << "abccoefs: " << abccoefs[0] << " " << abccoefs[1] << " " <<abccoefs[2] << " " << std::endl;
-        std::cout << "coefErrors: " << coefErrors[0] << " " << coefErrors[1] << " " <<coefErrors[2] << " " << std::endl;
+        std::cout << "abccoefs: " << abccoefs[0] << " " << abccoefs[1] << " " << abccoefs[2] << " " << std::endl;
+        std::cout << "coefErrors: " << coefErrors[0] << " " << coefErrors[1] << " " << coefErrors[2] << " " << std::endl;
 
         fitcoefs[b] = abccoefs;
         datFile << Betalist[b] << " " << abccoefs[2] << " " << coefErrors[2] << "\n";
@@ -788,32 +795,66 @@ void saveOtime(double Beta)
 {
     json Jdata;
 
-    // std::vector<double> times;
     const int N[5] = {2, 4, 6, 8, 10};
+    std::vector<double> betalist = {1.7,1.9, 2.1, 2.3, 2.5, 2.7};
     Jdata["Xlabel"] = "LATTICE SIZE";
-    Jdata["Ylabel"] = "TIME (s)";
+    Jdata["Xlabel2"] = "β";
+    Jdata["Ylabel"] = "TIME (ms)";
 
     std::string Beta_str = std::to_string(Beta);
     Beta_str.erase(Beta_str.find_last_not_of('0') + 1, std::string::npos);
     Beta_str.erase(Beta_str.find_last_not_of('.') + 1, std::string::npos);
     Jdata["title"] = "Time to perform 50 iterations \\n for different lattice sizes and β=" + Beta_str;
+    Jdata["title2"] = "Time to perform 50 iterations \\n for different β sizes and lattice size L=6";
 
     std::string cpath = std::filesystem::current_path();
     std::string path = cpath + "/graphdata";
+    double maxi = 0;
+     double maxi2 = 0;
     std::ofstream datFile(path + "/Otime.dat");
+    int Navg = 5;
     for (auto n : N)
     {
-        std::cout << "N = " << n << std::endl;
-        auto start = std::chrono::high_resolution_clock::now();
-        Lattice_Plaqcalculation(n, 0, 30, Beta);
-        auto finish = std::chrono::high_resolution_clock::now();
-        double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+        //std::cout << "N = " << n << std::endl;
+        double elapsed = 0;
+        for (int i = 0; i < Navg; i++)
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            Lattice_Plaqcalculation(n, 0, 30, Beta);
+            auto finish = std::chrono::high_resolution_clock::now();
+            elapsed += std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+        }
+        elapsed /= Navg;
         datFile << n << " " << elapsed << "\n";
-        std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
+        if (elapsed > maxi)
+        {
+            maxi = elapsed;
+        }
+        //std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
+    }
+    datFile << "\n\n";
+    for (auto b : betalist)
+    {
+        double elapsed = 0;
+        for (int i = 0; i < Navg; i++)
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            Lattice_Plaqcalculation(6, 0, 30, b);
+            auto finish = std::chrono::high_resolution_clock::now();
+            elapsed += std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+        }
+        elapsed /= Navg;
+        datFile << b << " " << elapsed << "\n";
+        if (elapsed > maxi2)
+        {
+            maxi2 = elapsed;
+        }
+        //std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
     }
     datFile.close();
     Jdata["Lsizes"] = N;
-    // Jdata["Ltimes"] = times;
+    Jdata["max"] = maxi;
+    Jdata["max2"] = maxi2;
     Saveas(Jdata, "json_datatime");
 }
 void drawOtime()
@@ -828,20 +869,36 @@ void drawOtime()
     json data = json::parse(f);
     FILE *g;
     g = popen("gnuplot -p", "w");
-
-    fprintf(g, "set title \"%s\"\n", data["title"].get<std::string>().c_str());
-    fprintf(g, "set xlabel \"%s\"\n", data["Xlabel"].get<std::string>().c_str());
-    fprintf(g, "set ylabel \"%s\"\n", data["Ylabel"].get<std::string>().c_str());
-
-    fprintf(g, "plot 'graphdata/Otime.dat' using 1:2 lt rgb 'blue' with lines");
-    // fprintf(g, ", [0:12] x**4 lt rgb  'red' title 'O(L**4)'");
-    fprintf(g, "set xrange [0:12]\n");
-
-    fprintf(g, "\n");
-    fflush(g);
     fprintf(g, "set term png  \n");
     fprintf(g, "set output \"graphdata/Otimefig.png\"\n");
-    fprintf(g, "replot\n");
+    fprintf(g, "set xrange [1:12]\n");
+    //std::cout << "max: " << data["max"].get<double>() << std::endl;
+    fprintf(g, "set yrange [1: \"%f\"]\n", data["max"].get<double>() * 1.1);
+    fprintf(g, "set logscale y\n");
+    fprintf(g, "set logscale x\n");
+    fprintf(g, "set title \"%s\"\n", data["title"].get<std::string>().c_str());
+
+    fprintf(g, "set multiplot layout 1,2 columns\n");
+    
+    fprintf(g, "set xlabel \"%s\"\n", data["Xlabel"].get<std::string>().c_str());
+    fprintf(g, "set ylabel \"%s\"\n", data["Ylabel"].get<std::string>().c_str());
+    fprintf(g, "plot 'graphdata/Otime.dat' index 0  using 1:2 lt 1 lc rgb 'blue' with lines title 'data points'");
+    fprintf(g, ", [1:12] x**2 lc rgb  'yellow' title 'O(L**2)'");
+    fprintf(g, ", [1:12] x**3 lc rgb  'red' title 'O(L**3)'");
+    fprintf(g, ", [1:12] x**4 lc rgb  'green' title 'O(L**4)'");
+    fprintf(g, ", [1:12] x**5 lc rgb  'purple' title 'O(L**5)'\n");
+    fprintf(g, "unset xlabel \n");
+    fprintf(g, "unset logscale y\n");
+    fprintf(g, "unset logscale x\n");
+
+    fprintf(g, "set autoscale x\n");
+    fprintf(g, "set autoscale y\n");
+    //std::cout << "max: " << data["max"].get<double>() << std::endl;
+    //fprintf(g, "set yrange [0: \"%f\"]\n", data["max2"].get<double>() * 1.1);
+    fprintf(g, "set xlabel \"%s\"\n", data["Xlabel2"].get<std::string>().c_str());
+    fprintf(g, "set title \"%s\"\n", data["title2"].get<std::string>().c_str());
+    fprintf(g, "plot 'graphdata/Otime.dat' index 1  using 1:2 lt 1 lc rgb 'blue' title 'data points'\n");
+    fprintf(g, "unset multiplot \n");
     fprintf(g, "set term x11 \n");
     pclose(g);
 }

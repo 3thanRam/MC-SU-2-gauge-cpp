@@ -336,5 +336,5 @@ void Lattice::equilibrium(int Iterations, double Beta)
         }
     }
     Avplaq /= (Iterations - 20);
-    std::cout << "Average plaquette after " << Iterations << " iterations: " << Avplaq << std::endl;
+    //std::cout << "Average plaquette after " << Iterations << " iterations: " << Avplaq << std::endl;
 };

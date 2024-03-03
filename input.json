@@ -1,9 +1,12 @@
 {
     "numbIterations": 50,
     "Lsizes": [
-        6
+        2,
+        4,
+        8,
+        10
     ],
-    "graphNumb": "6",
+    "graphNumb": "t",
     "Calc": true,
     "Beta": 2.3
 }
