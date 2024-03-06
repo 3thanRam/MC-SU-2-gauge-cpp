@@ -159,7 +159,7 @@ std::vector<double> randirectionvector(double length)
 // Returns the maximum size of a wilson loop for a given lattice size
 int MaxWilsonloop(int L)
 {
-    int maxsizeloop;
+    int maxsizeloop = 6;
     switch (L)
     {
     case 2:

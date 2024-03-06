@@ -659,7 +659,7 @@ void savefig6(int L, int Iterations, std::vector<double> Betalist)
         int Nav = 5;
         if (Betalist[b] >= 2.1)
         {
-            Nav = 10;
+            Nav = 25;
         }
 
         std::vector<double> Latt_data(Nloops);
@@ -796,7 +796,11 @@ void saveOtime(double Beta)
     json Jdata;
 
     const int N[5] = {2, 4, 6, 8, 10};
-    std::vector<double> betalist = {1.7,1.9, 2.1, 2.3, 2.5, 2.7};
+    std::vector<double> betalist= {1.7,1.8, 1.9,2.0, 2.1, 2.3, 2.5, 2.7};
+    //for (double b = 1.5; b < 2.4; b += 0.1)
+    //{
+    //    betalist.push_back(b);
+    //}
     Jdata["Xlabel"] = "LATTICE SIZE";
     Jdata["Xlabel2"] = "β";
     Jdata["Ylabel"] = "TIME (ms)";
@@ -810,12 +814,12 @@ void saveOtime(double Beta)
     std::string cpath = std::filesystem::current_path();
     std::string path = cpath + "/graphdata";
     double maxi = 0;
-     double maxi2 = 0;
+    double maxi2 = 0;
     std::ofstream datFile(path + "/Otime.dat");
     int Navg = 5;
     for (auto n : N)
     {
-        //std::cout << "N = " << n << std::endl;
+        // std::cout << "N = " << n << std::endl;
         double elapsed = 0;
         for (int i = 0; i < Navg; i++)
         {
@@ -830,7 +834,7 @@ void saveOtime(double Beta)
         {
             maxi = elapsed;
         }
-        //std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
+        // std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
     }
     datFile << "\n\n";
     for (auto b : betalist)
@@ -849,7 +853,10 @@ void saveOtime(double Beta)
         {
             maxi2 = elapsed;
         }
-        //std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
+        if(b==betalist[0]){
+            Jdata["t0"] = elapsed;
+        }
+        // std::cout << "Elapsed time: " << elapsed / 1e3 << " s\n";
     }
     datFile.close();
     Jdata["Lsizes"] = N;
@@ -872,29 +879,29 @@ void drawOtime()
     fprintf(g, "set term png  \n");
     fprintf(g, "set output \"graphdata/Otimefig.png\"\n");
     fprintf(g, "set xrange [1:12]\n");
-    //std::cout << "max: " << data["max"].get<double>() << std::endl;
+    // std::cout << "max: " << data["max"].get<double>() << std::endl;
     fprintf(g, "set yrange [1: \"%f\"]\n", data["max"].get<double>() * 1.1);
     fprintf(g, "set logscale y\n");
     fprintf(g, "set logscale x\n");
     fprintf(g, "set title \"%s\"\n", data["title"].get<std::string>().c_str());
 
     fprintf(g, "set multiplot layout 1,2 columns\n");
-    
+
     fprintf(g, "set xlabel \"%s\"\n", data["Xlabel"].get<std::string>().c_str());
     fprintf(g, "set ylabel \"%s\"\n", data["Ylabel"].get<std::string>().c_str());
     fprintf(g, "plot 'graphdata/Otime.dat' index 0  using 1:2 lt 1 lc rgb 'blue' with lines title 'data points'");
-    fprintf(g, ", [1:12] x**2 lc rgb  'yellow' title 'O(L**2)'");
-    fprintf(g, ", [1:12] x**3 lc rgb  'red' title 'O(L**3)'");
-    fprintf(g, ", [1:12] x**4 lc rgb  'green' title 'O(L**4)'");
-    fprintf(g, ", [1:12] x**5 lc rgb  'purple' title 'O(L**5)'\n");
+    fprintf(g, ", [2:12] x**2 lc rgb  'yellow' title 'O(L**2)'");//,data["t0"].get<double>() );
+    fprintf(g, ", [2:12] x**3 lc rgb  'red' title 'O(L**3)'");//,data["t0"].get<double>() );
+    fprintf(g, ", [2:12] x**4 lc rgb  'green' title 'O(L**4)'");//,data["t0"].get<double>() );
+    fprintf(g, ", [2:12] x**5 lc rgb  'purple' title 'O(L**5)'\n");//,data["t0"].get<double>() );
     fprintf(g, "unset xlabel \n");
     fprintf(g, "unset logscale y\n");
     fprintf(g, "unset logscale x\n");
 
     fprintf(g, "set autoscale x\n");
     fprintf(g, "set autoscale y\n");
-    //std::cout << "max: " << data["max"].get<double>() << std::endl;
-    //fprintf(g, "set yrange [0: \"%f\"]\n", data["max2"].get<double>() * 1.1);
+    // std::cout << "max: " << data["max"].get<double>() << std::endl;
+    // fprintf(g, "set yrange [0: \"%f\"]\n", data["max2"].get<double>() * 1.1);
     fprintf(g, "set xlabel \"%s\"\n", data["Xlabel2"].get<std::string>().c_str());
     fprintf(g, "set title \"%s\"\n", data["title2"].get<std::string>().c_str());
     fprintf(g, "plot 'graphdata/Otime.dat' index 1  using 1:2 lt 1 lc rgb 'blue' title 'data points'\n");

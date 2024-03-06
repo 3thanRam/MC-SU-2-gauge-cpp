@@ -1,9 +1,6 @@
 {
     "numbIterations": 50,
     "Lsizes": [
-        2,
-        4,
-        8,
         10
     ],
     "graphNumb": "t",
